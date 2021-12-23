@@ -1,0 +1,5 @@
+,BaseValue,MinValue,MaxValue,DerivedAttributeInfo,bCanStack
+PCUnitAttributeSet.MaxHealth,100,0,100,,False
+PCUnitAttributeSet.Health,100,0,100,,False
+PCUnitAttributeSet.Damage,20,0,1000,,False
+PCUnitAttributeSet.Movement,1,1,100,,False
