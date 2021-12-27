@@ -25,7 +25,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	/** Returns CursorToWorld subobject **/
+	/** Returns ability system component. **/
 	FORCEINLINE class UPCAbilitySystemComponent* GetAbilitySystem() { return AbilitySystem; }
 
 	UFUNCTION(BlueprintNativeEvent)
@@ -86,8 +86,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	/** A decal that projects to the cursor location. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	/** The ability system component. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AbilitySystem, meta = (AllowPrivateAccess = "true"))
 	class UPCAbilitySystemComponent* AbilitySystem;
 
 private:
