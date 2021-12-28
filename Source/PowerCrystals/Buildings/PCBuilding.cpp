@@ -5,6 +5,8 @@
 #include "../Abilities/PCAbilitySystemComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/SceneComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 APCBuilding::APCBuilding()
@@ -36,6 +38,9 @@ APCBuilding::APCBuilding()
 	Mesh->SetGenerateOverlapEvents(false);
 	Mesh->SetCanEverAffectNavigation(false);
 	Mesh->SetupAttachment(BoxComponent);
+
+	UnitsRef = CreateDefaultSubobject<USceneComponent>("UnitsRef");
+	UnitsRef->SetupAttachment(BoxComponent);
 }
 
 // Called when the game starts or when spawned
@@ -50,3 +55,11 @@ void APCBuilding::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+void APCBuilding::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APCBuilding, Team);
+	DOREPLIFETIME(APCBuilding, Faction);
+	DOREPLIFETIME(APCBuilding, PlayerOwner);
+}

@@ -108,6 +108,15 @@ void APCGameMode::SpawnPlayerBaseAndUnits(AController* Controller)
 	{
 		FVector StartLocation = PCController->StartSpot->GetActorLocation();
 		FRotator StartRotation = PCController->StartSpot->GetActorRotation();
+		APCBuilding* InitialBuilding = nullptr;
+		if (InitialPlayerBuilding)
+		{
+			FTransform StartTransform = FTransform(StartRotation, StartLocation);
+			InitialBuilding = SpawnPlayerBuilding(StartTransform, InitialPlayerBuilding, PCController);
+		}
+
+		FVector UnitsLocation = InitialBuilding->GetUnitsRefComponent()->GetComponentLocation();
+		FRotator UnitsRotation = InitialBuilding->GetUnitsRefComponent()->GetComponentRotation();
 		int32 index = 0;
 		for (TSubclassOf<APCUnit> UnitBlueprint : InitialPlayerUnits)
 		{
@@ -115,14 +124,14 @@ void APCGameMode::SpawnPlayerBaseAndUnits(AController* Controller)
 			FVector NewLocation;
 			if (index == 0)
 			{
-				NewLocation = StartLocation;
+				NewLocation = UnitsLocation;
 			}
 			else
 			{
-				NewLocation = StartLocation + (LocationDirection * (FMath::TruncToFloat(index / 10) + 1) * 250);
+				NewLocation = UnitsLocation + (LocationDirection * (FMath::TruncToFloat(index / 10) + 1) * 250);
 			}
 
-			FTransform StartTransform = FTransform(StartRotation, NewLocation);
+			FTransform StartTransform = FTransform(UnitsRotation, NewLocation);
 			SpawnPlayerUnit(StartTransform, UnitBlueprint, PCController);
 
 			index++;
@@ -130,12 +139,12 @@ void APCGameMode::SpawnPlayerBaseAndUnits(AController* Controller)
 	}
 }
 
-void APCGameMode::SpawnPlayerUnit(FTransform StartTransform, TSubclassOf<APCUnit> UnitBlueprint, APCPlayerController* PCController)
+APCUnit* APCGameMode::SpawnPlayerUnit(FTransform StartTransform, TSubclassOf<APCUnit> UnitBlueprint, APCPlayerController* PCController)
 {
 	UWorld* const World = GetWorld();
 	if (!World)
 	{
-		return;
+		return nullptr;
 	}
 
 	APCUnit* NewUnit = World->SpawnActorDeferred<APCUnit>(UnitBlueprint, StartTransform, GetOwner());
@@ -146,14 +155,36 @@ void APCGameMode::SpawnPlayerUnit(FTransform StartTransform, TSubclassOf<APCUnit
 		NewUnit->PlayerOwner = PCController;
 		NewUnit->FinishSpawning(StartTransform);
 	}
+
+	return NewUnit;
 }
 
-void APCGameMode::SpawnEnemyUnit(FTransform StartTransform, TSubclassOf<APCUnit> UnitBlueprint)
+APCBuilding* APCGameMode::SpawnPlayerBuilding(FTransform StartTransform, TSubclassOf<APCBuilding> BuildingBlueprint, APCPlayerController* PCController)
 {
 	UWorld* const World = GetWorld();
 	if (!World)
 	{
-		return;
+		return nullptr;
+	}
+
+	APCBuilding* NewBuilding = World->SpawnActorDeferred<APCBuilding>(BuildingBlueprint, StartTransform, GetOwner());
+	if (NewBuilding)
+	{
+		NewBuilding->Team = PCController->Team;
+		NewBuilding->Faction = PCController->Faction;
+		NewBuilding->PlayerOwner = PCController;
+		NewBuilding->FinishSpawning(StartTransform);
+	}
+
+	return NewBuilding;
+}
+
+APCUnit* APCGameMode::SpawnEnemyUnit(FTransform StartTransform, TSubclassOf<APCUnit> UnitBlueprint)
+{
+	UWorld* const World = GetWorld();
+	if (!World)
+	{
+		return nullptr;
 	}
 
 	APCUnit* NewUnit = World->SpawnActorDeferred<APCUnit>(UnitBlueprint, StartTransform, GetOwner());
@@ -164,4 +195,6 @@ void APCGameMode::SpawnEnemyUnit(FTransform StartTransform, TSubclassOf<APCUnit>
 		NewUnit->PlayerOwner = nullptr;
 		NewUnit->FinishSpawning(StartTransform);
 	}
+
+	return NewUnit;
 }

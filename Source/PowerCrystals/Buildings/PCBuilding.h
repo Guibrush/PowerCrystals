@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GameplayTagContainer.h"
+#include "../Player/PCPlayerController.h"
 #include "PCBuilding.generated.h"
 
 UCLASS()
@@ -21,6 +23,18 @@ public:
 	/** Returns ability system component. **/
 	FORCEINLINE class UPCAbilitySystemComponent* GetAbilitySystem() { return AbilitySystem; }
 
+	/** Returns the units component. **/
+	FORCEINLINE class USceneComponent* GetUnitsRefComponent() { return UnitsRef; }
+
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	FGameplayTag Team;
+
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	FGameplayTag Faction;
+
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	APCPlayerController* PlayerOwner;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -36,5 +50,16 @@ protected:
 	/** The BoxComponent being used for collision. */
 	UPROPERTY(Category = Building, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UBoxComponent* BoxComponent;
+
+	/** 
+		Scene component used as a point of reference for units. This can be used as spawn point, interaction point, etc.
+		Its location needs to be correctly set in blueprints.
+	*/
+	UPROPERTY(Category = Building, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class USceneComponent* UnitsRef;
+
+private:
+
+	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
 };

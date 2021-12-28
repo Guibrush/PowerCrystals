@@ -31,7 +31,7 @@ APCPlayerCharacter::APCPlayerCharacter()
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->SetUsingAbsoluteRotation(true); // Don't want arm to rotate when character does
-	CameraBoom->TargetArmLength = 1500.f;
+	CameraBoom->TargetArmLength = 3000.f;
 	CameraBoom->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));
 	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
 
@@ -49,6 +49,8 @@ APCPlayerCharacter::APCPlayerCharacter()
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
+
+	CameraZoomSpeed = 20.0f;
 }
 
 void APCPlayerCharacter::Tick(float DeltaSeconds)
@@ -79,5 +81,5 @@ void APCPlayerCharacter::MoveRight(float Value)
 
 void APCPlayerCharacter::Zoom(float Value)
 {
-	CameraBoom->TargetArmLength += 20 * Value;
+	CameraBoom->TargetArmLength += Value * CameraZoomSpeed;
 }
