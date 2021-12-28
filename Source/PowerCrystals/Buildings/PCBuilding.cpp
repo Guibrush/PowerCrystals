@@ -55,6 +55,16 @@ void APCBuilding::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+void APCBuilding::OnBuildingSelected_Implementation()
+{
+
+}
+
+void APCBuilding::OnBuildingDeselected_Implementation()
+{
+
+}
+
 void APCBuilding::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

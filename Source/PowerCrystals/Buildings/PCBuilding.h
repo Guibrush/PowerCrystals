@@ -26,6 +26,12 @@ public:
 	/** Returns the units component. **/
 	FORCEINLINE class USceneComponent* GetUnitsRefComponent() { return UnitsRef; }
 
+	UFUNCTION(BlueprintNativeEvent)
+	void OnBuildingSelected();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void OnBuildingDeselected();
+
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	FGameplayTag Team;
 

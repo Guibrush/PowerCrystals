@@ -103,10 +103,30 @@ void APCGameMode::AssignPlayerTeam(AController* Controller)
 
 void APCGameMode::SpawnPlayerBaseAndUnits(AController* Controller)
 {
+	UWorld* const World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
 	APCPlayerController* PCController = Cast<APCPlayerController>(Controller);
 	if (PCController)
 	{
-		FVector StartLocation = PCController->StartSpot->GetActorLocation();
+		FVector StartLocation;
+		ECollisionChannel Channel = ECC_WorldStatic;
+		FHitResult OutHit;
+		FVector StartPos = PCController->StartSpot->GetActorLocation() + (FVector::UpVector * 1000.0f);
+		FVector EndPos = PCController->StartSpot->GetActorLocation() + (FVector::DownVector * 1000.0f);
+		bool TraceHit = World->LineTraceSingleByChannel(OutHit, StartPos, EndPos, Channel);
+		if (TraceHit)
+		{
+			StartLocation = OutHit.ImpactPoint;
+		}
+		else
+		{
+			StartLocation = PCController->StartSpot->GetActorLocation();
+		}
+
 		FRotator StartRotation = PCController->StartSpot->GetActorRotation();
 		APCBuilding* InitialBuilding = nullptr;
 		if (InitialPlayerBuilding)

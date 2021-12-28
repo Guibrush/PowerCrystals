@@ -5,6 +5,7 @@
 #include "Runtime/Engine/Classes/Components/DecalComponent.h"
 #include "PCPlayerCharacter.h"
 #include "../Units/PCUnit.h"
+#include "../Buildings/PCBuilding.h"
 #include "../UI/PCHUD.h"
 #include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
@@ -67,19 +68,7 @@ void APCPlayerController::SelectionPressed()
 
 void APCPlayerController::SelectionReleased()
 {
-	// Deselect all the actors previously selected
-	for (AActor* SelectedActor : SelectedActors)
-	{
-		APCUnit* SelectedUnit = Cast<APCUnit>(SelectedActor);
-		if (SelectedUnit)
-		{
-			SelectedUnit->OnUnitDeselected();
-		}
-
-		// Handle deselection of other actor types.
-	}
-
-	SelectedActors.Empty();
+	DeselectAllActors();
 
 	TArray<APCUnit*> SelectedUnits;
 	APCHUD* HUD = Cast<APCHUD>(GetHUD());
@@ -107,17 +96,51 @@ void APCPlayerController::SelectionReleased()
 		if (Hit.GetActor())
 		{
 			APCUnit* SelectedUnit = Cast<APCUnit>(Hit.GetActor());
-			if (SelectedUnit && (SelectedUnit->Team == Team))
-			{
-				SelectedActors.AddUnique(Hit.GetActor());
-				SelectedUnit->OnUnitSelected();
-			}
+			APCBuilding* SelectedBuilding = Cast<APCBuilding>(Hit.GetActor());
 
-			// Handle selection of other actor types.
+			if (SelectedUnit)
+			{
+				if (SelectedUnit->Team == Team)
+				{
+					SelectedActors.AddUnique(Hit.GetActor());
+					SelectedUnit->OnUnitSelected();
+				}
+			}
+			else if (SelectedBuilding)
+			{
+				if (SelectedBuilding->Team == Team)
+				{
+					SelectedActors.AddUnique(Hit.GetActor());
+					SelectedBuilding->OnBuildingSelected();
+				}
+			}
 		}
 	}
 
 	NotifyServerNewSelection(SelectedActors);
+}
+
+void APCPlayerController::DeselectAllActors()
+{
+	// Deselect all the actors previously selected
+	for (AActor* SelectedActor : SelectedActors)
+	{
+		APCUnit* SelectedUnit = Cast<APCUnit>(SelectedActor);
+		if (SelectedUnit)
+		{
+			SelectedUnit->OnUnitDeselected();
+			continue;
+		}
+
+		APCBuilding* SelectedBuilding = Cast<APCBuilding>(SelectedActor);
+		if (SelectedBuilding)
+		{
+			SelectedBuilding->OnBuildingDeselected();
+			continue;
+		}
+	}
+
+	SelectedActors.Empty();
 }
 
 void APCPlayerController::ActionPressed()

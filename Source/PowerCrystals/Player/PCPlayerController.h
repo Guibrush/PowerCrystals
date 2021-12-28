@@ -57,6 +57,8 @@ private:
 	UFUNCTION(Server, Reliable)
 	void NotifyServerNewAction(FHitResult Hit);
 
+	void DeselectAllActors();
+
 	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 };
 
