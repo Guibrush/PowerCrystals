@@ -6,6 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "GameplayTagContainer.h"
 #include "../Units/PCUnit.h"
+#include "../Buildings/PCBuilding.h"
 #include "PCGameMode.generated.h"
 
 UCLASS(minimalapi)
@@ -30,6 +31,9 @@ public:
 	FGameplayTag EnemyFaction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<APCBuilding> InitialPlayerBuilding;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TArray<TSubclassOf<APCUnit>> InitialPlayerUnits;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -51,9 +55,11 @@ private:
 
 	void SpawnInitialEnemyUnits();
 
-	void SpawnPlayerUnit(FTransform StartTransform, TSubclassOf<APCUnit> UnitBlueprint, APCPlayerController* PCController);
+	APCUnit* SpawnPlayerUnit(FTransform StartTransform, TSubclassOf<APCUnit> UnitBlueprint, APCPlayerController* PCController);
 
-	void SpawnEnemyUnit(FTransform StartTransform, TSubclassOf<APCUnit> UnitBlueprint);
+	APCBuilding* SpawnPlayerBuilding(FTransform StartTransform, TSubclassOf<APCBuilding> BuildingBlueprint, APCPlayerController* PCController);
+
+	APCUnit* SpawnEnemyUnit(FTransform StartTransform, TSubclassOf<APCUnit> UnitBlueprint);
 
 	int32 CurrentTeamIndex;
 };

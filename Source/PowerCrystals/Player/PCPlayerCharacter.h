@@ -31,6 +31,9 @@ public:
 
 	void Zoom(float Value);
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float CameraZoomSpeed;
+
 private:
 	/** Top down camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
