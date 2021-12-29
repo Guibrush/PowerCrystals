@@ -7,6 +7,8 @@
 #include "GameplayTagContainer.h"
 #include "PCPlayerController.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FNewSelectedActors);
+
 UCLASS()
 class APCPlayerController : public APlayerController
 {
@@ -29,6 +31,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	FGameplayTag Faction;
+
+	UPROPERTY(BlueprintAssignable)
+	FNewSelectedActors OnNewSelectedActors;
 
 protected:
 

@@ -117,6 +117,8 @@ void APCPlayerController::SelectionReleased()
 		}
 	}
 
+	OnNewSelectedActors.Broadcast();
+
 	NotifyServerNewSelection(SelectedActors);
 }
 
