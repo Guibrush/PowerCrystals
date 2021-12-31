@@ -7,6 +7,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SceneComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "../Components/PCActionableActorComponent.h"
 
 // Sets default values
 APCBuilding::APCBuilding()
@@ -41,12 +42,20 @@ APCBuilding::APCBuilding()
 
 	UnitsRef = CreateDefaultSubobject<USceneComponent>("UnitsRef");
 	UnitsRef->SetupAttachment(BoxComponent);
+
+	ActionableActorComponent = CreateDefaultSubobject<UPCActionableActorComponent>("ActionableActorComponent");
+	ActionableActorComponent->InitComponent(false, true);
+	ActionableActorComponent->SetIsReplicated(true);
 }
 
 // Called when the game starts or when spawned
 void APCBuilding::BeginPlay()
 {
 	Super::BeginPlay();
+
+	OnBuildingHealthChangedDelegate = FScriptDelegate();
+	OnBuildingHealthChangedDelegate.BindUFunction(this, "BuildingHealthChanged");
+	ActionableActorComponent->OnHealthChanged.Add(OnBuildingHealthChangedDelegate);
 }
 
 // Called every frame
@@ -55,14 +64,28 @@ void APCBuilding::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void APCBuilding::OnBuildingSelected_Implementation()
+void APCBuilding::BuildingSelected_Implementation()
 {
 
 }
 
-void APCBuilding::OnBuildingDeselected_Implementation()
+void APCBuilding::BuildingDeselected_Implementation()
 {
 
+}
+
+void APCBuilding::BuildingHealthChanged_Implementation(float NewValue, AActor* Attacker)
+{
+	if (!IsDestroyed && (NewValue <= 0.0))
+	{
+		BuildingDestroyed(Attacker);
+	}
+}
+
+void APCBuilding::BuildingDestroyed_Implementation(AActor* Killer)
+{
+	IsDestroyed = true;
+	ActionableActorComponent->OnDied.Broadcast(Killer, this);
 }
 
 void APCBuilding::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
@@ -72,4 +95,5 @@ void APCBuilding::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLif
 	DOREPLIFETIME(APCBuilding, Team);
 	DOREPLIFETIME(APCBuilding, Faction);
 	DOREPLIFETIME(APCBuilding, PlayerOwner);
+	DOREPLIFETIME(APCBuilding, IsDestroyed);
 }

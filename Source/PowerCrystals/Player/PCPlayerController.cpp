@@ -84,7 +84,7 @@ void APCPlayerController::SelectionReleased()
 			if (SelectedUnit->Team == Team)
 			{
 				SelectedActors.AddUnique(SelectedUnit);
-				SelectedUnit->OnUnitSelected();
+				SelectedUnit->UnitSelected();
 			}
 		}
 	}
@@ -103,7 +103,7 @@ void APCPlayerController::SelectionReleased()
 				if (SelectedUnit->Team == Team)
 				{
 					SelectedActors.AddUnique(Hit.GetActor());
-					SelectedUnit->OnUnitSelected();
+					SelectedUnit->UnitSelected();
 				}
 			}
 			else if (SelectedBuilding)
@@ -111,7 +111,7 @@ void APCPlayerController::SelectionReleased()
 				if (SelectedBuilding->Team == Team)
 				{
 					SelectedActors.AddUnique(Hit.GetActor());
-					SelectedBuilding->OnBuildingSelected();
+					SelectedBuilding->BuildingSelected();
 				}
 			}
 		}
@@ -130,14 +130,14 @@ void APCPlayerController::DeselectAllActors()
 		APCUnit* SelectedUnit = Cast<APCUnit>(SelectedActor);
 		if (SelectedUnit)
 		{
-			SelectedUnit->OnUnitDeselected();
+			SelectedUnit->UnitDeselected();
 			continue;
 		}
 
 		APCBuilding* SelectedBuilding = Cast<APCBuilding>(SelectedActor);
 		if (SelectedBuilding)
 		{
-			SelectedBuilding->OnBuildingDeselected();
+			SelectedBuilding->BuildingDeselected();
 			continue;
 		}
 	}
