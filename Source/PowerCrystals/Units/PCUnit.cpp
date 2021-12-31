@@ -5,6 +5,8 @@
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "../Buildings/PCBuilding.h"
+#include "../Components/PCActionableActorComponent.h"
 
 // Sets default values
 APCUnit::APCUnit()
@@ -13,6 +15,10 @@ APCUnit::APCUnit()
 	PrimaryActorTick.bCanEverTick = true;
 
 	AbilitySystem = CreateDefaultSubobject<UPCAbilitySystemComponent>("AbilitySystem");
+
+	ActionableActorComponent = CreateDefaultSubobject<UPCActionableActorComponent>("ActionableActorComponent");
+	ActionableActorComponent->InitComponent(true, false);
+	ActionableActorComponent->SetIsReplicated(true);
 }
 
 // Called when the game starts or when spawned
@@ -26,6 +32,10 @@ void APCUnit::BeginPlay()
 		GetMesh()->SetSkeletalMesh(MergedMesh);
 	}
 
+	OnUnitHealthChangedDelegate = FScriptDelegate();
+	OnUnitHealthChangedDelegate.BindUFunction(this, "UnitHealthChanged");
+	ActionableActorComponent->OnHealthChanged.Add(OnUnitHealthChangedDelegate);
+
 	InitUnit();
 }
 
@@ -35,37 +45,35 @@ void APCUnit::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void APCUnit::OnUnitSelected_Implementation()
+void APCUnit::UnitSelected_Implementation()
 {
 
 }
 
-void APCUnit::OnUnitDeselected_Implementation()
+void APCUnit::UnitDeselected_Implementation()
 {
 
 }
 
-void APCUnit::OnUnitHealthChanged_Implementation(float NewValue, AActor* Attacker)
+void APCUnit::UnitHealthChanged_Implementation(float NewValue, AActor* Attacker)
 {
-	OnHealthChanged.Broadcast(NewValue, Attacker);
-
 	if (!IsDead && (NewValue <= 0.0))
 	{
-		OnUnitDied(Attacker);
+		UnitDied(Attacker);
 	}
 }
 
-void APCUnit::OnUnitDied_Implementation(AActor* Killer)
+void APCUnit::UnitDied_Implementation(AActor* Killer)
 {
 	CancelCurrentAbility();
 
 	IsDead = true;
-	OnDied.Broadcast(Killer, this);
+	ActionableActorComponent->OnDied.Broadcast(Killer, this);
 }
 
-void APCUnit::OnTargetUnitDied_Implementation(APCUnit* KillerActor, AActor* ActorKilled)
+void APCUnit::TargetDied_Implementation(APCUnit* KillerActor, AActor* ActorKilled)
 {
-	if (ActorKilled == GetCurrentTargetUnit())
+	if (ActorKilled == GetCurrentTarget())
 	{
 		CancelCurrentAbility();
 	}
@@ -85,17 +93,19 @@ void APCUnit::ExecuteAction(FGameplayTag InputActionTag, FHitResult Hit)
 
 	CancelCurrentAbility();
 
-	APCUnit* ActionableUnit = Cast<APCUnit>(Hit.GetActor());
-	if (ActionableUnit && !ActionableUnit->IsDead)
+	if (Hit.GetActor())
 	{
-		if (AbilitySystem->ActivateAbility(InputActionTag, Hit))
+		UPCActionableActorComponent* ActionableComponent = Cast<UPCActionableActorComponent>(Hit.GetActor()->GetComponentByClass(UPCActionableActorComponent::StaticClass()));
+		if (ActionableComponent && ActionableComponent->IsAlive() && AbilitySystem->ActivateAbility(InputActionTag, Hit))
 		{
-			OnTargetUnitDiedDelegate = FScriptDelegate();
-			OnTargetUnitDiedDelegate.BindUFunction(this, "OnTargetUnitDied");
-			ActionableUnit->OnDied.Add(OnTargetUnitDiedDelegate);
+			OnTargetDiedDelegate = FScriptDelegate();
+			OnTargetDiedDelegate.BindUFunction(this, "TargetDied");
+			ActionableComponent->OnDied.Add(OnTargetDiedDelegate);
+			return;
 		}
 	}
-	else if (Hit.bBlockingHit)
+	
+	if (Hit.bBlockingHit)
 	{
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(Controller, Hit.Location);
 	}
@@ -108,23 +118,26 @@ void APCUnit::ExecuteAbility(FGameplayTag InputAbilityTag)
 
 void APCUnit::CancelCurrentAbility()
 {
-	APCUnit* TargetUnit = GetCurrentTargetUnit();
-	if (TargetUnit)
+	if (GetCurrentTarget())
 	{
-		TargetUnit->OnDied.Remove(OnTargetUnitDiedDelegate);
+		UPCActionableActorComponent* ActionableComponent = Cast<UPCActionableActorComponent>(GetCurrentTarget()->GetComponentByClass(UPCActionableActorComponent::StaticClass()));
+		if (ActionableComponent && ActionableComponent->IsAlive())
+		{
+			ActionableComponent->OnDied.Remove(OnTargetDiedDelegate);
+		}
 	}
 
 	AbilitySystem->CancelCurrentAbility();
 }
 
-APCUnit* APCUnit::GetCurrentTargetUnit()
+AActor* APCUnit::GetCurrentTarget()
 {
 	if (AbilitySystem)
 	{
 		TArray<AActor*> TargetActors = UAbilitySystemBlueprintLibrary::GetActorsFromTargetData(AbilitySystem->CurrentTargetData, 0);
 		if (!TargetActors.IsEmpty())
 		{
-			return Cast<APCUnit>(TargetActors[0]);
+			return TargetActors[0];
 		}
 	}
 

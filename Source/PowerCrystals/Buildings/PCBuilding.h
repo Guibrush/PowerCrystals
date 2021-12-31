@@ -26,11 +26,19 @@ public:
 	/** Returns the units component. **/
 	FORCEINLINE class USceneComponent* GetUnitsRefComponent() { return UnitsRef; }
 
-	UFUNCTION(BlueprintNativeEvent)
-	void OnBuildingSelected();
+	FORCEINLINE class UPCActionableActorComponent* GetActionableActorComponent() { return ActionableActorComponent; }
 
 	UFUNCTION(BlueprintNativeEvent)
-	void OnBuildingDeselected();
+	void BuildingSelected();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void BuildingDeselected();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void BuildingHealthChanged(float NewValue, AActor* Attacker);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void BuildingDestroyed(AActor* Killer);
 
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	FGameplayTag Team;
@@ -40,6 +48,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	APCPlayerController* PlayerOwner;
+
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	bool IsDestroyed;
 
 protected:
 	// Called when the game starts or when spawned
@@ -64,8 +75,13 @@ protected:
 	UPROPERTY(Category = Building, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class USceneComponent* UnitsRef;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ActionableActor, meta = (AllowPrivateAccess = "true"))
+	class UPCActionableActorComponent* ActionableActorComponent;
+
 private:
 
 	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+
+	FScriptDelegate OnBuildingHealthChangedDelegate;
 
 };

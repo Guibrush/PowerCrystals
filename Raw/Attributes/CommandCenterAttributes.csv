@@ -1,0 +1,3 @@
+,BaseValue,MinValue,MaxValue,DerivedAttributeInfo,bCanStack
+PCAttributeSet.MaxHealth,1000,0,1000,,False
+PCAttributeSet.Health,1000,0,1000,,False
