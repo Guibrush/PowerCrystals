@@ -70,16 +70,8 @@ void APCGameMode::StartPlay()
 	int32 index = 0;
 	for (TSubclassOf<APCUnit> EnemyBlueprint : InitialEnemyUnits)
 	{
-		FVector LocationDirection = FVector::XAxisVector.RotateAngleAxis((36 * (index % 10)), FVector::ZAxisVector);
-		FVector NewLocation;
-		if (index == 0)
-		{
-			NewLocation = StartLocation;
-		}
-		else
-		{
-			NewLocation = StartLocation + (LocationDirection * (FMath::TruncToFloat(index / 10) + 1) * 600);
-		}
+		FVector LocationDirection = FVector::XAxisVector.RotateAngleAxis(FMath::FRandRange(-180, 180), FVector::ZAxisVector);
+		FVector NewLocation = StartLocation + (LocationDirection * index * 250.0f);
 
 		FTransform StartTransform = FTransform(StartRotation, NewLocation);
 		SpawnEnemyUnit(StartTransform, EnemyBlueprint);
@@ -135,26 +127,23 @@ void APCGameMode::SpawnPlayerBaseAndUnits(AController* Controller)
 			InitialBuilding = SpawnPlayerBuilding(StartTransform, InitialPlayerBuilding, PCController);
 		}
 
-		FVector UnitsLocation = InitialBuilding->GetUnitsRefComponent()->GetComponentLocation();
-		FRotator UnitsRotation = InitialBuilding->GetUnitsRefComponent()->GetComponentRotation();
-		int32 index = 0;
-		for (TSubclassOf<APCUnit> UnitBlueprint : InitialPlayerUnits)
+		if (InitialBuilding)
 		{
-			FVector LocationDirection = FVector::XAxisVector.RotateAngleAxis((36 * (index % 10)), FVector::ZAxisVector);
-			FVector NewLocation;
-			if (index == 0)
+			FVector UnitsLocation = InitialBuilding->GetUnitsSpawnPoint()->GetComponentLocation();
+			FRotator UnitsRotation = InitialBuilding->GetUnitsSpawnPoint()->GetComponentRotation();
+			FVector SpawnDirection = (InitialBuilding->GetActorLocation() - UnitsLocation) * -1;
+			SpawnDirection.Normalize();
+			int32 index = 0;
+			for (TSubclassOf<APCUnit> UnitBlueprint : InitialPlayerUnits)
 			{
-				NewLocation = UnitsLocation;
-			}
-			else
-			{
-				NewLocation = UnitsLocation + (LocationDirection * (FMath::TruncToFloat(index / 10) + 1) * 250);
-			}
+				FVector LocationDirection = SpawnDirection.RotateAngleAxis(FMath::FRandRange(-90, 90), FVector::ZAxisVector);
+				FVector NewLocation = UnitsLocation + (LocationDirection * index * 200.0f);
 
-			FTransform StartTransform = FTransform(UnitsRotation, NewLocation);
-			SpawnPlayerUnit(StartTransform, UnitBlueprint, PCController);
+				FTransform StartTransform = FTransform(UnitsRotation, NewLocation);
+				SpawnPlayerUnit(StartTransform, UnitBlueprint, PCController);
 
-			index++;
+				index++;
+			}
 		}
 	}
 }
@@ -167,7 +156,7 @@ APCUnit* APCGameMode::SpawnPlayerUnit(FTransform StartTransform, TSubclassOf<APC
 		return nullptr;
 	}
 
-	APCUnit* NewUnit = World->SpawnActorDeferred<APCUnit>(UnitBlueprint, StartTransform, GetOwner());
+	APCUnit* NewUnit = World->SpawnActorDeferred<APCUnit>(UnitBlueprint, StartTransform, GetOwner(), nullptr, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
 	if (NewUnit)
 	{
 		NewUnit->Team = PCController->Team;
@@ -207,7 +196,7 @@ APCUnit* APCGameMode::SpawnEnemyUnit(FTransform StartTransform, TSubclassOf<APCU
 		return nullptr;
 	}
 
-	APCUnit* NewUnit = World->SpawnActorDeferred<APCUnit>(UnitBlueprint, StartTransform, GetOwner());
+	APCUnit* NewUnit = World->SpawnActorDeferred<APCUnit>(UnitBlueprint, StartTransform, GetOwner(), nullptr, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
 	if (NewUnit)
 	{
 		NewUnit->Team = EnemyTeam;

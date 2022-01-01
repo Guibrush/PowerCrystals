@@ -23,8 +23,9 @@ public:
 	/** Returns ability system component. **/
 	FORCEINLINE class UPCAbilitySystemComponent* GetAbilitySystem() { return AbilitySystem; }
 
-	/** Returns the units component. **/
-	FORCEINLINE class USceneComponent* GetUnitsRefComponent() { return UnitsRef; }
+	FORCEINLINE class USceneComponent* GetUnitsSpawnPoint() { return UnitsSpawnPoint; }
+
+	FORCEINLINE class USceneComponent* GetUnitsRallyPoint() { return UnitsRallyPoint; }
 
 	FORCEINLINE class UPCActionableActorComponent* GetActionableActorComponent() { return ActionableActorComponent; }
 
@@ -68,12 +69,11 @@ protected:
 	UPROPERTY(Category = Building, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UBoxComponent* BoxComponent;
 
-	/** 
-		Scene component used as a point of reference for units. This can be used as spawn point, interaction point, etc.
-		Its location needs to be correctly set in blueprints.
-	*/
 	UPROPERTY(Category = Building, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	class USceneComponent* UnitsRef;
+	class USceneComponent* UnitsSpawnPoint;
+
+	UPROPERTY(Category = Building, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class USceneComponent* UnitsRallyPoint;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ActionableActor, meta = (AllowPrivateAccess = "true"))
 	class UPCActionableActorComponent* ActionableActorComponent;

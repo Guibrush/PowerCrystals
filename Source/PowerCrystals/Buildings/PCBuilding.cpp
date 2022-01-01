@@ -40,8 +40,11 @@ APCBuilding::APCBuilding()
 	Mesh->SetCanEverAffectNavigation(false);
 	Mesh->SetupAttachment(BoxComponent);
 
-	UnitsRef = CreateDefaultSubobject<USceneComponent>("UnitsRef");
-	UnitsRef->SetupAttachment(BoxComponent);
+	UnitsSpawnPoint = CreateDefaultSubobject<USceneComponent>("UnitsSpawnPoint");
+	UnitsSpawnPoint->SetupAttachment(BoxComponent);
+
+	UnitsRallyPoint = CreateDefaultSubobject<USceneComponent>("UnitsRallyPoint");
+	UnitsRallyPoint->SetupAttachment(BoxComponent);
 
 	ActionableActorComponent = CreateDefaultSubobject<UPCActionableActorComponent>("ActionableActorComponent");
 	ActionableActorComponent->InitComponent(false, true);
