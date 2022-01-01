@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PCUnitController.h"
-#include "Navigation/CrowdFollowingComponent.h"
+#include "../Components/PCCrowdFollowingComponent.h"
 
 APCUnitController::APCUnitController(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer.SetDefaultSubobjectClass<UCrowdFollowingComponent>(TEXT("PathFollowingComponent")))
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UPCCrowdFollowingComponent>(TEXT("PathFollowingComponent")))
 {
 
 }

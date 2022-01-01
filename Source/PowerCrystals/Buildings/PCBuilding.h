@@ -23,14 +23,23 @@ public:
 	/** Returns ability system component. **/
 	FORCEINLINE class UPCAbilitySystemComponent* GetAbilitySystem() { return AbilitySystem; }
 
-	/** Returns the units component. **/
-	FORCEINLINE class USceneComponent* GetUnitsRefComponent() { return UnitsRef; }
+	FORCEINLINE class USceneComponent* GetUnitsSpawnPoint() { return UnitsSpawnPoint; }
+
+	FORCEINLINE class USceneComponent* GetUnitsRallyPoint() { return UnitsRallyPoint; }
+
+	FORCEINLINE class UPCActionableActorComponent* GetActionableActorComponent() { return ActionableActorComponent; }
 
 	UFUNCTION(BlueprintNativeEvent)
-	void OnBuildingSelected();
+	void BuildingSelected();
 
 	UFUNCTION(BlueprintNativeEvent)
-	void OnBuildingDeselected();
+	void BuildingDeselected();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void BuildingHealthChanged(float NewValue, AActor* Attacker);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void BuildingDestroyed(AActor* Killer);
 
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	FGameplayTag Team;
@@ -40,6 +49,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	APCPlayerController* PlayerOwner;
+
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	bool IsDestroyed;
 
 protected:
 	// Called when the game starts or when spawned
@@ -57,15 +69,19 @@ protected:
 	UPROPERTY(Category = Building, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UBoxComponent* BoxComponent;
 
-	/** 
-		Scene component used as a point of reference for units. This can be used as spawn point, interaction point, etc.
-		Its location needs to be correctly set in blueprints.
-	*/
 	UPROPERTY(Category = Building, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	class USceneComponent* UnitsRef;
+	class USceneComponent* UnitsSpawnPoint;
+
+	UPROPERTY(Category = Building, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class USceneComponent* UnitsRallyPoint;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ActionableActor, meta = (AllowPrivateAccess = "true"))
+	class UPCActionableActorComponent* ActionableActorComponent;
 
 private:
 
 	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+
+	FScriptDelegate OnBuildingHealthChangedDelegate;
 
 };

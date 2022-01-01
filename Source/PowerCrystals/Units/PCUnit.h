@@ -10,9 +10,6 @@
 #include "../Player/PCPlayerController.h"
 #include "PCUnit.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FUnitHealthChange, float, NewValue, AActor*, Attacker);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FUnitDied, AActor*, KillerActor, AActor*, ActorKilled);
-
 UCLASS()
 class POWERCRYSTALS_API APCUnit : public ACharacter
 {
@@ -28,20 +25,22 @@ public:
 	/** Returns ability system component. **/
 	FORCEINLINE class UPCAbilitySystemComponent* GetAbilitySystem() { return AbilitySystem; }
 
-	UFUNCTION(BlueprintNativeEvent)
-	void OnUnitSelected();
+	FORCEINLINE class UPCActionableActorComponent* GetActionableActorComponent() { return ActionableActorComponent; }
 
 	UFUNCTION(BlueprintNativeEvent)
-	void OnUnitDeselected();
+	void UnitSelected();
 
 	UFUNCTION(BlueprintNativeEvent)
-	void OnUnitHealthChanged(float NewValue, AActor* Attacker);
+	void UnitDeselected();
 
 	UFUNCTION(BlueprintNativeEvent)
-	void OnUnitDied(AActor* Killer);
+	void UnitHealthChanged(float NewValue, AActor* Attacker);
 
 	UFUNCTION(BlueprintNativeEvent)
-	void OnTargetUnitDied(APCUnit* KillerActor, AActor* ActorKilled);
+	void UnitDied(AActor* Killer);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void TargetDied(APCUnit* KillerActor, AActor* ActorKilled);
 
 	UFUNCTION(BlueprintCallable)
 	void ExecuteAction(FGameplayTag InputActionTag, FHitResult Hit);
@@ -53,7 +52,7 @@ public:
 	void CancelCurrentAbility();
 
 	UFUNCTION(BlueprintCallable)
-	APCUnit* GetCurrentTargetUnit();
+	AActor* GetCurrentTarget();
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void InitUnit();
@@ -76,12 +75,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	bool IsDead;
 
-	UPROPERTY(BlueprintAssignable)
-	FUnitHealthChange OnHealthChanged;
-
-	UPROPERTY(BlueprintAssignable)
-	FUnitDied OnDied;
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -90,11 +83,16 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AbilitySystem, meta = (AllowPrivateAccess = "true"))
 	class UPCAbilitySystemComponent* AbilitySystem;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ActionableActor, meta = (AllowPrivateAccess = "true"))
+	class UPCActionableActorComponent* ActionableActorComponent;
+
 private:
 
 	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
-	/** Delegate to get notified when the target unit dies. */
-	FScriptDelegate OnTargetUnitDiedDelegate;
+	/** Delegate to get notified when the target unit or building dies. */
+	FScriptDelegate OnTargetDiedDelegate;
+
+	FScriptDelegate OnUnitHealthChangedDelegate;
 
 };
