@@ -19,17 +19,21 @@ public:
 
 	virtual void BeginPlay() override;
 
-	UFUNCTION(BlueprintCallable)
-	bool ActivateAbility(FGameplayTag InputActionTag, FHitResult Hit);
+	// Begin UAbilitySystemComponent
+	virtual void NotifyAbilityEnded(FGameplayAbilitySpecHandle Handle, UGameplayAbility* Ability, bool bWasCancelled) override;
+	// End UAbilitySystemComponent
 
 	UFUNCTION(BlueprintCallable)
-	void CancelCurrentAbility();
+	bool ActivateAbility(FGameplayTag InputActionTag, FHitResult Hit, class APCPlayerController* PlayerController);
+
+	UFUNCTION(BlueprintCallable)
+	void CancelCurrentAbility(class APCPlayerController* PlayerController);
 
 	UFUNCTION(BlueprintNativeEvent)
 	void AbilityEnded(UPCGameplayAbility* Ability);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TMap<FGameplayTag, TSubclassOf<UPCGameplayAbility>> UnitAbilities;
+	TMap<FGameplayTag, TSubclassOf<UPCGameplayAbility>> Abilities;
 
 	UPROPERTY(BlueprintReadWrite)
 	FGameplayAbilityTargetDataHandle CurrentTargetData;

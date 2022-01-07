@@ -10,6 +10,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
+#include "../Abilities/PCAbilitySystemComponent.h"
+#include "../Player/PCPlayerController.h"
 
 APCPlayerCharacter::APCPlayerCharacter()
 {
@@ -45,6 +47,8 @@ APCPlayerCharacter::APCPlayerCharacter()
 	CursorToWorld->SetupAttachment(RootComponent);
 	CursorToWorld->DecalSize = FVector(16.0f, 32.0f, 32.0f);
 	CursorToWorld->SetRelativeRotation(FRotator(90.0f, 0.0f, 0.0f).Quaternion());
+
+	AbilitySystem = CreateDefaultSubobject<UPCAbilitySystemComponent>("AbilitySystem");
 
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
@@ -82,4 +86,38 @@ void APCPlayerCharacter::MoveRight(float Value)
 void APCPlayerCharacter::Zoom(float Value)
 {
 	CameraBoom->TargetArmLength += Value * CameraZoomSpeed;
+}
+
+bool APCPlayerCharacter::ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit)
+{
+	if (!AbilitySystem)
+	{
+		return false;
+	}
+
+	APCPlayerController* PC = Cast<APCPlayerController>(GetController());
+	if (!PC)
+	{
+		return false;
+	}
+
+	CancelCurrentAbility();
+
+	return AbilitySystem->ActivateAbility(AbilityTag, Hit, PC);
+}
+
+void APCPlayerCharacter::CancelCurrentAbility()
+{
+	if (!AbilitySystem)
+	{
+		return;
+	}
+
+	APCPlayerController* PC = Cast<APCPlayerController>(GetController());
+	if (!PC)
+	{
+		return;
+	}
+
+	AbilitySystem->CancelCurrentAbility(PC);
 }

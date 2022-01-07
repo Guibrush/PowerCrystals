@@ -3,9 +3,12 @@
 
 #include "PCGameplayAbility.h"
 #include "../Units/PCUnit.h"
+#include "../Player/PCPlayerCharacter.h"
+#include "../Player/PCPlayerController.h"
 #include "PCAbilitySystemComponent.h"
+#include "AbilitySystemBlueprintLibrary.h"
 
-FGameplayAbilityTargetDataHandle UPCGameplayAbility::GetCurrentTargetData()
+FGameplayAbilityTargetDataHandle UPCGameplayAbility::GetCurrentTargetData() const
 {
 	APCUnit* OwningUnit = Cast<APCUnit>(GetOwningActorFromActorInfo());
 	if (OwningUnit)
@@ -19,6 +22,26 @@ FGameplayAbilityTargetDataHandle UPCGameplayAbility::GetCurrentTargetData()
 APCUnit* UPCGameplayAbility::GetOwningUnit()
 {
 	return Cast<APCUnit>(GetOwningActorFromActorInfo());
+}
+
+APCPlayerCharacter* UPCGameplayAbility::GetOwningPlayer()
+{
+	return Cast<APCPlayerCharacter>(GetOwningActorFromActorInfo());
+}
+
+APCPlayerController* UPCGameplayAbility::GetPlayerController()
+{
+	if (GetOwningUnit())
+	{
+		return GetOwningUnit()->PlayerOwner;
+	}
+
+	if (GetOwningPlayer())
+	{
+		return GetOwningPlayer()->GetController<APCPlayerController>();
+	}
+
+	return nullptr;
 }
 
 class UPCAbilitySystemComponent* UPCGameplayAbility::GetAbilitySystemComponent()

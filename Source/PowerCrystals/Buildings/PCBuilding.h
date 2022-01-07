@@ -5,11 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GameplayTagContainer.h"
-#include "../Player/PCPlayerController.h"
+#include "AbilitySystemInterface.h"
 #include "PCBuilding.generated.h"
 
 UCLASS()
-class POWERCRYSTALS_API APCBuilding : public AActor
+class POWERCRYSTALS_API APCBuilding : public AActor, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 	
@@ -29,6 +29,10 @@ public:
 
 	FORCEINLINE class UPCActionableActorComponent* GetActionableActorComponent() { return ActionableActorComponent; }
 
+	// Begin IAbilitySystemInterface
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	// End IAbilitySystemInterface
+
 	UFUNCTION(BlueprintNativeEvent)
 	void BuildingSelected();
 
@@ -41,6 +45,33 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void BuildingDestroyed(AActor* Killer);
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void BPInitPreviewMode();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void BPInitConstructionMode();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void BPBuildingConstructed();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void BPNewBuildingMode(bool NewIsInConstruction, bool NewIsInPreview);
+
+	UFUNCTION(BlueprintCallable)
+	void InitPreviewMode();
+
+	UFUNCTION(BlueprintCallable)
+	void InitConstructionMode();
+
+	UFUNCTION(BlueprintCallable)
+	void BuildingConstructed();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastNewBuildingModeAndCollision(bool NewIsInConstruction, bool NewIsInPreview, ECollisionEnabled::Type NewCollisionMode);
+
+	UFUNCTION(Server, Reliable)
+	void ServerNewMouseProjectedPoint(FVector NewPoint);
+
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	FGameplayTag Team;
 
@@ -48,10 +79,22 @@ public:
 	FGameplayTag Faction;
 
 	UPROPERTY(BlueprintReadOnly, Replicated)
-	APCPlayerController* PlayerOwner;
+	class APCPlayerController* PlayerOwner;
 
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	bool IsDestroyed;
+
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	bool IsInPreview;
+
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	bool IsInConstruction;
+
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	bool HasPreview;
+
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	bool ValidPosition;
 
 protected:
 	// Called when the game starts or when spawned
@@ -83,5 +126,8 @@ private:
 	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
 	FScriptDelegate OnBuildingHealthChangedDelegate;
+
+	UPROPERTY(Replicated)
+	FVector MouseProjectedPoint;
 
 };

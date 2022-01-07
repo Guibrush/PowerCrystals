@@ -79,41 +79,48 @@ void APCUnit::TargetDied_Implementation(APCUnit* KillerActor, AActor* ActorKille
 	}
 }
 
-void APCUnit::ExecuteAction(FGameplayTag InputActionTag, FHitResult Hit)
+bool APCUnit::ExecuteAbility(FGameplayTag InputAbilityTag, FHitResult Hit)
 {
 	if (IsDead)
 	{
-		return;
+		return false;
 	}
 
 	if (!AbilitySystem)
 	{
-		return;
+		return false;
 	}
 
 	CancelCurrentAbility();
 
+	UPCActionableActorComponent* TargetActionableComponent;
 	if (Hit.GetActor())
 	{
-		UPCActionableActorComponent* ActionableComponent = Cast<UPCActionableActorComponent>(Hit.GetActor()->GetComponentByClass(UPCActionableActorComponent::StaticClass()));
-		if (ActionableComponent && ActionableComponent->IsAlive() && AbilitySystem->ActivateAbility(InputActionTag, Hit))
+		TargetActionableComponent = Cast<UPCActionableActorComponent>(Hit.GetActor()->GetComponentByClass(UPCActionableActorComponent::StaticClass()));
+	}
+	else
+	{
+		TargetActionableComponent = nullptr;
+	}
+
+	if (!TargetActionableComponent && Hit.bBlockingHit && (InputAbilityTag == PlayerOwner->ActionTag))
+	{
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(Controller, Hit.Location);
+		return true;
+	}
+
+	bool AbilityActivated = AbilitySystem->ActivateAbility(InputAbilityTag, Hit, PlayerOwner);
+	if (AbilityActivated && Hit.GetActor())
+	{
+		if (TargetActionableComponent && TargetActionableComponent->IsAlive())
 		{
 			OnTargetDiedDelegate = FScriptDelegate();
 			OnTargetDiedDelegate.BindUFunction(this, "TargetDied");
-			ActionableComponent->OnDied.Add(OnTargetDiedDelegate);
-			return;
+			TargetActionableComponent->OnDied.Add(OnTargetDiedDelegate);
 		}
 	}
-	
-	if (Hit.bBlockingHit)
-	{
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(Controller, Hit.Location);
-	}
-}
 
-void APCUnit::ExecuteAbility(FGameplayTag InputAbilityTag)
-{
-
+	return AbilityActivated;
 }
 
 void APCUnit::CancelCurrentAbility()
@@ -127,7 +134,7 @@ void APCUnit::CancelCurrentAbility()
 		}
 	}
 
-	AbilitySystem->CancelCurrentAbility();
+	AbilitySystem->CancelCurrentAbility(PlayerOwner);
 }
 
 AActor* APCUnit::GetCurrentTarget()
@@ -142,6 +149,11 @@ AActor* APCUnit::GetCurrentTarget()
 	}
 
 	return nullptr;
+}
+
+UAbilitySystemComponent* APCUnit::GetAbilitySystemComponent() const
+{
+	return AbilitySystem;
 }
 
 void APCUnit::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const

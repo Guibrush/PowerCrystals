@@ -3,6 +3,7 @@
 
 #include "PCAbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "../Player/PCPlayerController.h"
 
 void UPCAbilitySystemComponent::BeginPlay()
 {
@@ -10,16 +11,21 @@ void UPCAbilitySystemComponent::BeginPlay()
 
 	if (GetOwnerActor() && GetOwnerActor()->HasAuthority())
 	{
-		for (TPair<FGameplayTag, TSubclassOf<UPCGameplayAbility>> AbilityDesc : UnitAbilities)
+		for (TPair<FGameplayTag, TSubclassOf<UPCGameplayAbility>> AbilityDesc : Abilities)
 		{
 			GiveAbility(FGameplayAbilitySpec(AbilityDesc.Value.Get(), 1, 0));
 		}
 	}
 }
 
-bool UPCAbilitySystemComponent::ActivateAbility(FGameplayTag InputActionTag, FHitResult Hit)
+void UPCAbilitySystemComponent::NotifyAbilityEnded(FGameplayAbilitySpecHandle Handle, UGameplayAbility* Ability, bool bWasCancelled)
 {
-	TSubclassOf<UPCGameplayAbility> Ability = UnitAbilities.Find(InputActionTag)->Get();
+	Super::NotifyAbilityEnded(Handle, Ability, bWasCancelled);
+}
+
+bool UPCAbilitySystemComponent::ActivateAbility(FGameplayTag InputActionTag, FHitResult Hit, APCPlayerController* PlayerController)
+{
+	TSubclassOf<UPCGameplayAbility> Ability = Abilities.Find(InputActionTag)->Get();
 	if (Ability)
 	{
 		CurrentTargetData = UAbilitySystemBlueprintLibrary::AbilityTargetDataFromHitResult(Hit);
@@ -35,11 +41,14 @@ bool UPCAbilitySystemComponent::ActivateAbility(FGameplayTag InputActionTag, FHi
 	return false;
 }
 
-void UPCAbilitySystemComponent::CancelCurrentAbility()
+void UPCAbilitySystemComponent::CancelCurrentAbility(APCPlayerController* PlayerController)
 {
 	if (CurrentAbility)
 	{
 		CancelAbility(CurrentAbility.GetDefaultObject());
+
+		CurrentAbility = nullptr;
+		CurrentTargetData = nullptr;
 	}
 }
 

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "GameplayTagContainer.h"
 #include "PCActionableActorComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthChanged, float, NewValue, AActor*, Attacker);
@@ -26,11 +27,27 @@ public:
 
 	void HealthChanged(float NewHealth, AActor* Attacker);
 
+	void ActorSelected();
+
+	void ActorDeselected();
+
 	UFUNCTION(NetMulticast, Reliable)
 	void HealthChangedMulticast(float NewHealth, AActor* Attacker);
 
 	UFUNCTION(BlueprintCallable)
+	bool ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit);
+
+	UFUNCTION(BlueprintPure)
 	bool IsAlive();
+
+	UFUNCTION(BlueprintPure)
+	class UPCAbilitySystemComponent* GetAbilitySystem();
+
+	UFUNCTION(BlueprintPure)
+	FGameplayTag GetTeam();
+
+	UFUNCTION(BlueprintPure)
+	FGameplayTag GetFaction();
 
 	UPROPERTY(BlueprintReadOnly)
 	bool IsUnit;

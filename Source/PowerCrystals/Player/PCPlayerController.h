@@ -17,20 +17,34 @@ class APCPlayerController : public APlayerController
 public:
 	APCPlayerController();
 
+	UFUNCTION(BlueprintCallable)
+	void ExecuteAbility(FGameplayTag AbilityTag, bool BlocksInput);
+
+	UFUNCTION(BlueprintCallable)
+	class APCBuilding* SpawnBuilding(TSubclassOf<class APCBuilding> BuildingBlueprint);
+
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	TArray<AActor*> SelectedActors;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGameplayTag InputActionTag;
+	FGameplayTag PlayerAbilityTag;
 
+	/** Tag associated to the left mouse click. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FGameplayTag> InputAbilitiesTags;
+	FGameplayTag SelectionTag;
+
+	/** Tag associated to the right mouse click. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTag ActionTag;
 
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	FGameplayTag Team;
 
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	FGameplayTag Faction;
+
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	bool InputBlocked;
 
 	UPROPERTY(BlueprintAssignable)
 	FNewSelectedActors OnNewSelectedActors;
@@ -61,6 +75,9 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void NotifyServerNewAction(FHitResult Hit);
+
+	UFUNCTION(Server, Reliable)
+	void NotifyServerNewAbility(FGameplayTag AbilityTag, FHitResult Hit, bool BlocksInput);
 
 	void DeselectAllActors();
 

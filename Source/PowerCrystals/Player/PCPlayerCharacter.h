@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "GameplayTagContainer.h"
 #include "PCPlayerCharacter.generated.h"
 
 UCLASS()
@@ -24,12 +25,20 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns CursorToWorld subobject **/
 	FORCEINLINE class UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
+	/** Returns ability system component. **/
+	FORCEINLINE class UPCAbilitySystemComponent* GetAbilitySystem() { return AbilitySystem; }
 
 	/** Movement functions. */
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 
 	void Zoom(float Value);
+
+	UFUNCTION(BlueprintCallable)
+	bool ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit);
+
+	UFUNCTION(BlueprintCallable)
+	void CancelCurrentAbility();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float CameraZoomSpeed;
@@ -46,5 +55,9 @@ private:
 	/** A decal that projects to the cursor location. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UDecalComponent* CursorToWorld;
+
+	/** The ability system component. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AbilitySystem, meta = (AllowPrivateAccess = "true"))
+	class UPCAbilitySystemComponent* AbilitySystem;
 
 };
