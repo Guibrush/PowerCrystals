@@ -156,7 +156,7 @@ APCUnit* APCGameMode::SpawnPlayerUnit(FTransform StartTransform, TSubclassOf<APC
 		return nullptr;
 	}
 
-	APCUnit* NewUnit = World->SpawnActorDeferred<APCUnit>(UnitBlueprint, StartTransform, GetOwner(), nullptr, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
+	APCUnit* NewUnit = World->SpawnActorDeferred<APCUnit>(UnitBlueprint, StartTransform, PCController, nullptr, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
 	if (NewUnit)
 	{
 		NewUnit->Team = PCController->Team;
@@ -176,12 +176,13 @@ APCBuilding* APCGameMode::SpawnPlayerBuilding(FTransform StartTransform, TSubcla
 		return nullptr;
 	}
 
-	APCBuilding* NewBuilding = World->SpawnActorDeferred<APCBuilding>(BuildingBlueprint, StartTransform, GetOwner());
+	APCBuilding* NewBuilding = World->SpawnActorDeferred<APCBuilding>(BuildingBlueprint, StartTransform, PCController);
 	if (NewBuilding)
 	{
 		NewBuilding->Team = PCController->Team;
 		NewBuilding->Faction = PCController->Faction;
 		NewBuilding->PlayerOwner = PCController;
+		NewBuilding->HasPreview = false;
 		NewBuilding->FinishSpawning(StartTransform);
 	}
 

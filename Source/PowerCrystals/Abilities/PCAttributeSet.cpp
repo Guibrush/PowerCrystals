@@ -46,5 +46,6 @@ void UPCAttributeSet::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& Ou
 	DOREPLIFETIME(UPCAttributeSet, Health);
 	DOREPLIFETIME(UPCAttributeSet, Damage);
 	DOREPLIFETIME(UPCAttributeSet, Movement);
+	DOREPLIFETIME(UPCAttributeSet, ConstructionTime);
 }
 

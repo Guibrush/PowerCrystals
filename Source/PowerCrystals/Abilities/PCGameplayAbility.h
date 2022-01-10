@@ -17,13 +17,27 @@ class POWERCRYSTALS_API UPCGameplayAbility : public UGameplayAbility
 public:
 
 	UFUNCTION(BlueprintPure)
-	FGameplayAbilityTargetDataHandle GetCurrentTargetData();
+	FGameplayAbilityTargetDataHandle GetCurrentTargetData() const;
 
 	UFUNCTION(BlueprintPure)
 	class APCUnit* GetOwningUnit();
+
+	UFUNCTION(BlueprintPure)
+	class APCPlayerCharacter* GetOwningPlayer();
+
+	UFUNCTION(BlueprintPure)
+	class APCPlayerController* GetPlayerController();
 	
 	UFUNCTION(BlueprintPure)
 	class UPCAbilitySystemComponent* GetAbilitySystemComponent();
+
+	/** Whether the execution of this ability blocks the input or not. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AbilityConfig)
+	bool BlocksInput;
+
+	/** Whether this ability should be shown on the UI or not. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AbilityConfig)
+	bool ShowOnUI;
 
 protected:
 

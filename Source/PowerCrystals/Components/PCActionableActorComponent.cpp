@@ -4,6 +4,8 @@
 #include "PCActionableActorComponent.h"
 #include "../Units/PCUnit.h"
 #include "../Buildings/PCBuilding.h"
+#include "../Abilities/PCAbilitySystemComponent.h"
+#include "AbilitySystemInterface.h"
 
 // Sets default values for this component's properties
 UPCActionableActorComponent::UPCActionableActorComponent()
@@ -43,6 +45,46 @@ void UPCActionableActorComponent::HealthChanged(float NewHealth, AActor* Attacke
 	HealthChangedMulticast(NewHealth, Attacker);
 }
 
+void UPCActionableActorComponent::ActorSelected()
+{
+	if (IsUnit)
+	{
+		APCUnit* UnitOwner = GetOwner<APCUnit>();
+		if (UnitOwner)
+		{
+			UnitOwner->UnitSelected();
+		}
+	}
+	else if (IsBuilding)
+	{
+		APCBuilding* BuildingOwner = GetOwner<APCBuilding>();
+		if (BuildingOwner)
+		{
+			BuildingOwner->BuildingSelected();
+		}
+	}
+}
+
+void UPCActionableActorComponent::ActorDeselected()
+{
+	if (IsUnit)
+	{
+		APCUnit* UnitOwner = GetOwner<APCUnit>();
+		if (UnitOwner)
+		{
+			UnitOwner->UnitDeselected();
+		}
+	}
+	else if (IsBuilding)
+	{
+		APCBuilding* BuildingOwner = GetOwner<APCBuilding>();
+		if (BuildingOwner)
+		{
+			BuildingOwner->BuildingDeselected();
+		}
+	}
+}
+
 void UPCActionableActorComponent::HealthChangedMulticast_Implementation(float NewHealth, AActor* Attacker)
 {
 	OnHealthChanged.Broadcast(NewHealth, Attacker);
@@ -68,4 +110,81 @@ bool UPCActionableActorComponent::IsAlive()
 	}
 
 	return false;
+}
+
+bool UPCActionableActorComponent::ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit)
+{
+	if (IsUnit)
+	{
+		APCUnit* UnitOwner = GetOwner<APCUnit>();
+		if (UnitOwner)
+		{
+			return UnitOwner->ExecuteAbility(AbilityTag, Hit);
+		}
+	}
+	else if (IsBuilding)
+	{
+		APCBuilding* BuildingOwner = GetOwner<APCBuilding>();
+		if (BuildingOwner)
+		{
+			// TODO: Execute abilities for buildings???
+		}
+	}
+
+	return false;
+}
+
+UPCAbilitySystemComponent* UPCActionableActorComponent::GetAbilitySystem()
+{
+	const IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(GetOwner<AActor>());
+	if (ASI)
+	{
+		return Cast<UPCAbilitySystemComponent>(ASI->GetAbilitySystemComponent());
+	}
+
+	return nullptr;
+}
+
+FGameplayTag UPCActionableActorComponent::GetTeam()
+{
+	if (IsUnit)
+	{
+		APCUnit* UnitOwner = GetOwner<APCUnit>();
+		if (UnitOwner)
+		{
+			return UnitOwner->Team;
+		}
+	}
+	else if (IsBuilding)
+	{
+		APCBuilding* BuildingOwner = GetOwner<APCBuilding>();
+		if (BuildingOwner)
+		{
+			return BuildingOwner->Team;
+		}
+	}
+
+	return FGameplayTag::EmptyTag;
+}
+
+FGameplayTag UPCActionableActorComponent::GetFaction()
+{
+	if (IsUnit)
+	{
+		APCUnit* UnitOwner = GetOwner<APCUnit>();
+		if (UnitOwner)
+		{
+			return UnitOwner->Faction;
+		}
+	}
+	else if (IsBuilding)
+	{
+		APCBuilding* BuildingOwner = GetOwner<APCBuilding>();
+		if (BuildingOwner)
+		{
+			return BuildingOwner->Faction;
+		}
+	}
+
+	return FGameplayTag::EmptyTag;
 }

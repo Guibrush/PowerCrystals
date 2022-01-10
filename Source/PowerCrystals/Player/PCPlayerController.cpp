@@ -7,13 +7,18 @@
 #include "../Units/PCUnit.h"
 #include "../Buildings/PCBuilding.h"
 #include "../UI/PCHUD.h"
+#include "../Components/PCActionableActorComponent.h"
+#include "../Abilities/PCGameplayAbility.h"
 #include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
+#include "AbilitySystemBlueprintLibrary.h"
 
 APCPlayerController::APCPlayerController()
 {
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Crosshairs;
+
+	InputBlocked = false;
 }
 
 void APCPlayerController::PlayerTick(float DeltaTime)
@@ -59,6 +64,11 @@ void APCPlayerController::MoveRight(float Value)
 
 void APCPlayerController::SelectionPressed()
 {
+	if (InputBlocked)
+	{
+		return;
+	}
+
 	APCHUD* HUD = Cast<APCHUD>(GetHUD());
 	if (HUD)
 	{
@@ -68,56 +78,46 @@ void APCPlayerController::SelectionPressed()
 
 void APCPlayerController::SelectionReleased()
 {
-	DeselectAllActors();
-
-	TArray<APCUnit*> SelectedUnits;
-	APCHUD* HUD = Cast<APCHUD>(GetHUD());
-	if (HUD)
+	if (!InputBlocked)
 	{
-		SelectedUnits = HUD->FinishSelectionRectangle();
-	}
+		DeselectAllActors();
 
-	if (SelectedUnits.Num() > 0)
-	{
-		for (APCUnit* SelectedUnit : SelectedUnits)
+		TArray<APCUnit*> SelectedUnits;
+		APCHUD* HUD = Cast<APCHUD>(GetHUD());
+		if (HUD)
 		{
-			if (SelectedUnit->Team == Team)
-			{
-				SelectedActors.AddUnique(SelectedUnit);
-				SelectedUnit->UnitSelected();
-			}
+			SelectedUnits = HUD->FinishSelectionRectangle();
 		}
-	}
-	else
-	{
-		FHitResult Hit;
-		GetHitResultUnderCursor(ECC_Visibility, false, Hit);
 
-		if (Hit.GetActor())
+		if (SelectedUnits.Num() > 0)
 		{
-			APCUnit* SelectedUnit = Cast<APCUnit>(Hit.GetActor());
-			APCBuilding* SelectedBuilding = Cast<APCBuilding>(Hit.GetActor());
-
-			if (SelectedUnit)
+			for (APCUnit* SelectedUnit : SelectedUnits)
 			{
 				if (SelectedUnit->Team == Team)
 				{
-					SelectedActors.AddUnique(Hit.GetActor());
+					SelectedActors.AddUnique(SelectedUnit);
 					SelectedUnit->UnitSelected();
 				}
 			}
-			else if (SelectedBuilding)
+		}
+		else
+		{
+			FHitResult Hit;
+			GetHitResultUnderCursor(ECC_Visibility, false, Hit);
+
+			if (Hit.GetActor())
 			{
-				if (SelectedBuilding->Team == Team)
+				UPCActionableActorComponent* ActionableComponent = Cast<UPCActionableActorComponent>(Hit.GetActor()->GetComponentByClass(UPCActionableActorComponent::StaticClass()));
+				if (ActionableComponent && (ActionableComponent->GetTeam() == Team))
 				{
 					SelectedActors.AddUnique(Hit.GetActor());
-					SelectedBuilding->BuildingSelected();
+					ActionableComponent->ActorSelected();
 				}
 			}
 		}
-	}
 
-	OnNewSelectedActors.Broadcast();
+		OnNewSelectedActors.Broadcast();
+	}
 
 	NotifyServerNewSelection(SelectedActors);
 }
@@ -127,18 +127,10 @@ void APCPlayerController::DeselectAllActors()
 	// Deselect all the actors previously selected
 	for (AActor* SelectedActor : SelectedActors)
 	{
-		APCUnit* SelectedUnit = Cast<APCUnit>(SelectedActor);
-		if (SelectedUnit)
+		UPCActionableActorComponent* ActionableComponent = Cast<UPCActionableActorComponent>(SelectedActor->GetComponentByClass(UPCActionableActorComponent::StaticClass()));
+		if (ActionableComponent)
 		{
-			SelectedUnit->UnitDeselected();
-			continue;
-		}
-
-		APCBuilding* SelectedBuilding = Cast<APCBuilding>(SelectedActor);
-		if (SelectedBuilding)
-		{
-			SelectedBuilding->BuildingDeselected();
-			continue;
+			ActionableComponent->ActorDeselected();
 		}
 	}
 
@@ -167,24 +159,125 @@ void APCPlayerController::Zoom(float Value)
 	}
 }
 
+void APCPlayerController::ExecuteAbility(FGameplayTag AbilityTag, bool BlocksInput)
+{
+	FHitResult Hit;
+	GetHitResultUnderCursor(ECC_Visibility, false, Hit);
+
+	NotifyServerNewAbility(AbilityTag, Hit, BlocksInput);
+}
+
 void APCPlayerController::NotifyServerNewSelection_Implementation(const TArray<AActor*> &NewSelectedActors)
 {
-	SelectedActors = NewSelectedActors;
+	if (InputBlocked)
+	{
+		if (SelectedActors.Num() > 0)
+		{
+			for (AActor* SelectedActor : SelectedActors)
+			{
+				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(SelectedActor, SelectionTag, FGameplayEventData());
+			}
+		}
+		else
+		{
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetPawn(), SelectionTag, FGameplayEventData());
+		}
+
+		InputBlocked = false;
+	}
+	else
+	{
+		SelectedActors = NewSelectedActors;
+	}
 }
 
 void APCPlayerController::NotifyServerNewAction_Implementation(FHitResult Hit)
 {
-	if (SelectedActors.Num() > 0)
+	if (InputBlocked)
 	{
-		for (AActor* SelectedActor : SelectedActors)
+		if (SelectedActors.Num() > 0)
 		{
-			APCUnit* SelectedUnit = Cast<APCUnit>(SelectedActor);
-			if (SelectedUnit)
+			for (AActor* SelectedActor : SelectedActors)
 			{
-				SelectedUnit->ExecuteAction(InputActionTag, Hit);
+				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(SelectedActor, ActionTag, FGameplayEventData());
+			}
+		}
+		else
+		{
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetPawn(), ActionTag, FGameplayEventData());
+		}
+
+		InputBlocked = false;
+	}
+	else
+	{
+		if (SelectedActors.Num() > 0)
+		{
+			for (AActor* SelectedActor : SelectedActors)
+			{
+				UPCActionableActorComponent* ActionableComponent = Cast<UPCActionableActorComponent>(SelectedActor->GetComponentByClass(UPCActionableActorComponent::StaticClass()));
+				if (ActionableComponent)
+				{
+					ActionableComponent->ExecuteAbility(ActionTag, Hit);
+				}
 			}
 		}
 	}
+}
+
+void APCPlayerController::NotifyServerNewAbility_Implementation(FGameplayTag AbilityTag, FHitResult Hit, bool BlocksInput)
+{
+	if (InputBlocked)
+	{
+		return;
+	}
+
+	if (AbilityTag.MatchesAny(FGameplayTagContainer(PlayerAbilityTag)))
+	{
+		APCPlayerCharacter* PlayerCharacter = Cast<APCPlayerCharacter>(GetPawn());
+		if (PlayerCharacter)
+		{
+			if (PlayerCharacter->ExecuteAbility(AbilityTag, Hit))
+			{
+				InputBlocked = BlocksInput;
+			}
+		}
+	}
+	else if (SelectedActors.Num() > 0)
+	{
+		for (AActor* SelectedActor : SelectedActors)
+		{
+			UPCActionableActorComponent* ActionableComponent = Cast<UPCActionableActorComponent>(SelectedActor->GetComponentByClass(UPCActionableActorComponent::StaticClass()));
+			if (ActionableComponent)
+			{
+				if (ActionableComponent->ExecuteAbility(AbilityTag, Hit))
+				{
+					InputBlocked = BlocksInput;
+				}
+			}
+		}
+	}
+}
+
+APCBuilding* APCPlayerController::SpawnBuilding(TSubclassOf<APCBuilding> BuildingBlueprint)
+{
+	UWorld* const World = GetWorld();
+	if (!World)
+	{
+		return nullptr;
+	}
+
+	APCBuilding* NewBuilding = World->SpawnActorDeferred<APCBuilding>(BuildingBlueprint, GetPawn()->GetTransform(), this);
+	if (NewBuilding)
+	{
+		NewBuilding->Team = Team;
+		NewBuilding->Faction = Faction;
+		NewBuilding->PlayerOwner = this;
+		NewBuilding->HasPreview = true;
+		NewBuilding->FinishSpawning(GetPawn()->GetTransform());
+	}
+
+	return NewBuilding;
 }
 
 void APCPlayerController::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
@@ -194,4 +287,5 @@ void APCPlayerController::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >
 	DOREPLIFETIME(APCPlayerController, SelectedActors);
 	DOREPLIFETIME(APCPlayerController, Team);
 	DOREPLIFETIME(APCPlayerController, Faction);
+	DOREPLIFETIME(APCPlayerController, InputBlocked);
 }

@@ -3,11 +3,18 @@
 
 #include "PCBuilding.h"
 #include "../Abilities/PCAbilitySystemComponent.h"
+#include "../Abilities/PCAttributeSet.h"
 #include "Components/BoxComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SceneComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "../Components/PCActionableActorComponent.h"
+#include "../Player/PCPlayerController.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/GameplayStatics.h"
+#include "NavigationSystem.h"
+#include "NavAreas/NavArea_Null.h"
+#include "NavAreas/NavArea_Default.h"
 
 // Sets default values
 APCBuilding::APCBuilding()
@@ -49,6 +56,12 @@ APCBuilding::APCBuilding()
 	ActionableActorComponent = CreateDefaultSubobject<UPCActionableActorComponent>("ActionableActorComponent");
 	ActionableActorComponent->InitComponent(false, true);
 	ActionableActorComponent->SetIsReplicated(true);
+
+	IsDestroyed = false;
+	IsInPreview = false;
+	IsInConstruction = false;
+	HasPreview = true;
+	ValidPosition = true;
 }
 
 // Called when the game starts or when spawned
@@ -59,12 +72,69 @@ void APCBuilding::BeginPlay()
 	OnBuildingHealthChangedDelegate = FScriptDelegate();
 	OnBuildingHealthChangedDelegate.BindUFunction(this, "BuildingHealthChanged");
 	ActionableActorComponent->OnHealthChanged.Add(OnBuildingHealthChangedDelegate);
+
+	if (HasPreview)
+	{
+		InitPreviewMode();
+	}
+	else
+	{
+		BuildingConstructed();
+	}
 }
 
 // Called every frame
 void APCBuilding::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (IsInPreview)
+	{
+		if (!HasAuthority())
+		{
+			APCPlayerController* PlayerController = Cast<APCPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+			if (PlayerController == PlayerOwner)
+			{
+				FHitResult Hit;
+				// ECC_GameTraceChannel1 is the one called "BuildingPlacement". The config of this is on the DefaultEngine.ini
+				PlayerOwner->GetHitResultUnderCursor(ECC_GameTraceChannel1, false, Hit);
+				if (Hit.bBlockingHit)
+				{
+					SetActorLocation(Hit.Location);
+					ServerNewMouseProjectedPoint(Hit.Location);
+				}
+			}
+		}
+		else
+		{
+			SetActorLocation(MouseProjectedPoint);
+
+			TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+			TArray<AActor*> ActorsToIgnore;
+			ActorsToIgnore.Add(this);
+			TArray<AActor*> OutActors;
+			FVector BoxPos = GetActorLocation();
+			BoxPos.Z += BoxComponent->GetScaledBoxExtent().Z + (BoxComponent->GetScaledBoxExtent().Z * 0.5);
+			UKismetSystemLibrary::BoxOverlapActors(GetWorld(), BoxPos, BoxComponent->GetScaledBoxExtent(), ObjectTypes, nullptr, ActorsToIgnore, OutActors);
+
+			FVector NavMeshPoint = FVector::ZeroVector;
+			bool PointProjectedInNavMesh = false;
+			UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+			if (NavSys)
+			{
+				FNavLocation NavLoc;
+				PointProjectedInNavMesh = NavSys->ProjectPointToNavigation(GetActorLocation(), NavLoc);
+				NavMeshPoint = NavLoc.Location;
+			}
+
+			ValidPosition = PointProjectedInNavMesh && (OutActors.Num() == 0);
+		}
+	}
+}
+
+void APCBuilding::ServerNewMouseProjectedPoint_Implementation(FVector NewPoint)
+{
+	MouseProjectedPoint = NewPoint;
 }
 
 void APCBuilding::BuildingSelected_Implementation()
@@ -91,6 +161,90 @@ void APCBuilding::BuildingDestroyed_Implementation(AActor* Killer)
 	ActionableActorComponent->OnDied.Broadcast(Killer, this);
 }
 
+void APCBuilding::InitPreviewMode()
+{
+	IsInConstruction = false;
+	IsInPreview = true;
+
+	BoxComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	BoxComponent->SetCanEverAffectNavigation(false);
+
+	BPInitPreviewMode();
+
+	MulticastNewBuildingModeAndCollision(IsInConstruction, IsInPreview, ECollisionEnabled::NoCollision);
+}
+
+void APCBuilding::InitConstructionMode()
+{
+	IsInConstruction = true;
+	IsInPreview = false;
+
+	BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	BoxComponent->SetCanEverAffectNavigation(true);
+
+	float ConstructionTime = 0.0f;
+	UPCAttributeSet* AttributeSet = Cast<UPCAttributeSet>(AbilitySystem->GetSpawnedAttributes()[0]);
+	if (AttributeSet)
+	{
+		ConstructionTime = AttributeSet->ConstructionTime;
+	}
+
+	FTimerHandle TimerHandle;
+	GetWorldTimerManager().SetTimer(TimerHandle, this, &APCBuilding::BuildingConstructed, ConstructionTime, false);
+
+	BPInitConstructionMode();
+
+	MulticastNewBuildingModeAndCollision(IsInConstruction, IsInPreview, ECollisionEnabled::QueryAndPhysics);
+}
+
+void APCBuilding::BuildingConstructed()
+{
+	IsInConstruction = false;
+	IsInPreview = false;
+
+	BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	BoxComponent->SetCanEverAffectNavigation(true);
+
+	BPBuildingConstructed();
+
+	MulticastNewBuildingModeAndCollision(IsInConstruction, IsInPreview, ECollisionEnabled::QueryAndPhysics);
+}
+
+void APCBuilding::MulticastNewBuildingModeAndCollision_Implementation(bool NewIsInConstruction, bool NewIsInPreview, ECollisionEnabled::Type NewCollisionMode)
+{
+	IsInConstruction = NewIsInConstruction;
+	IsInPreview = NewIsInPreview;
+
+	BoxComponent->SetCollisionEnabled(NewCollisionMode);
+
+	if (!HasAuthority())
+	{
+		if (!IsInPreview)
+		{
+			Mesh->SetHiddenInGame(false);
+		}
+		else
+		{
+			APCPlayerController* PlayerController = Cast<APCPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+			if (PlayerController == PlayerOwner)
+			{
+				Mesh->SetHiddenInGame(false);
+			}
+			else
+			{
+				Mesh->SetHiddenInGame(true);
+			}
+		}
+	}
+
+	BPNewBuildingMode(NewIsInConstruction, NewIsInPreview);
+}
+
+UAbilitySystemComponent* APCBuilding::GetAbilitySystemComponent() const
+{
+	return AbilitySystem;
+}
+
 void APCBuilding::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -99,4 +253,9 @@ void APCBuilding::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLif
 	DOREPLIFETIME(APCBuilding, Faction);
 	DOREPLIFETIME(APCBuilding, PlayerOwner);
 	DOREPLIFETIME(APCBuilding, IsDestroyed);
+	DOREPLIFETIME(APCBuilding, IsInPreview);
+	DOREPLIFETIME(APCBuilding, IsInConstruction);
+	DOREPLIFETIME(APCBuilding, HasPreview);
+	DOREPLIFETIME(APCBuilding, ValidPosition);
+	DOREPLIFETIME(APCBuilding, MouseProjectedPoint);
 }

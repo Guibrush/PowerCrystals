@@ -8,10 +8,11 @@
 #include "GameplayTagContainer.h"
 #include "../Abilities/PCAbilitySystemComponent.h"
 #include "../Player/PCPlayerController.h"
+#include "AbilitySystemInterface.h"
 #include "PCUnit.generated.h"
 
 UCLASS()
-class POWERCRYSTALS_API APCUnit : public ACharacter
+class POWERCRYSTALS_API APCUnit : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -26,6 +27,10 @@ public:
 	FORCEINLINE class UPCAbilitySystemComponent* GetAbilitySystem() { return AbilitySystem; }
 
 	FORCEINLINE class UPCActionableActorComponent* GetActionableActorComponent() { return ActionableActorComponent; }
+
+	// Begin IAbilitySystemInterface
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	// End IAbilitySystemInterface
 
 	UFUNCTION(BlueprintNativeEvent)
 	void UnitSelected();
@@ -43,10 +48,7 @@ public:
 	void TargetDied(APCUnit* KillerActor, AActor* ActorKilled);
 
 	UFUNCTION(BlueprintCallable)
-	void ExecuteAction(FGameplayTag InputActionTag, FHitResult Hit);
-
-	UFUNCTION(BlueprintCallable)
-	void ExecuteAbility(FGameplayTag InputAbilityTag);
+	bool ExecuteAbility(FGameplayTag InputAbilityTag, FHitResult Hit);
 
 	UFUNCTION(BlueprintCallable)
 	void CancelCurrentAbility();

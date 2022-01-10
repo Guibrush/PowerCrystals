@@ -28,6 +28,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Movement")
 	float Movement;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Building")
+	float ConstructionTime;
+
 	virtual bool PreGameplayEffectExecute(struct FGameplayEffectModCallbackData& Data) override;
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
