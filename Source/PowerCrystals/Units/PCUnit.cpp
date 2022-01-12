@@ -5,8 +5,10 @@
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "../Buildings/PCBuilding.h"
 #include "../Components/PCActionableActorComponent.h"
+#include "../Abilities/PCAttributeSet.h"
 
 // Sets default values
 APCUnit::APCUnit()
@@ -35,6 +37,12 @@ void APCUnit::BeginPlay()
 	OnUnitHealthChangedDelegate = FScriptDelegate();
 	OnUnitHealthChangedDelegate.BindUFunction(this, "UnitHealthChanged");
 	ActionableActorComponent->OnHealthChanged.Add(OnUnitHealthChangedDelegate);
+
+	UPCAttributeSet* AttributeSet = Cast<UPCAttributeSet>(AbilitySystem->GetSpawnedAttributes()[0]);
+	if (AttributeSet)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed * AttributeSet->Movement;
+	}
 
 	InitUnit();
 }
@@ -149,6 +157,11 @@ AActor* APCUnit::GetCurrentTarget()
 	}
 
 	return nullptr;
+}
+
+void APCUnit::SetNewMovementSpeed(float NewMovementSpeed)
+{
+	GetCharacterMovement()->MaxWalkSpeed = NewMovementSpeed;
 }
 
 UAbilitySystemComponent* APCUnit::GetAbilitySystemComponent() const

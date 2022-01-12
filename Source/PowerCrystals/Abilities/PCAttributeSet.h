@@ -25,6 +25,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Damage")
 	float Damage;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Damage")
+	float AttackRange;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Damage")
+	float AttackRate;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Movement")
 	float Movement;
 

@@ -56,6 +56,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	AActor* GetCurrentTarget();
 
+	UFUNCTION(BlueprintCallable)
+	void SetNewMovementSpeed(float NewMovementSpeed);
+
 	UFUNCTION(BlueprintImplementableEvent)
 	void InitUnit();
 

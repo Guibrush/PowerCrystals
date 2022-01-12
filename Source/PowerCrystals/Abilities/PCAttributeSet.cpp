@@ -6,6 +6,7 @@
 #include "GameplayEffectExtension.h"
 #include "../Abilities/PCAbilitySystemComponent.h"
 #include "../Components/PCActionableActorComponent.h"
+#include "../Units/PCUnit.h"
 
 bool UPCAttributeSet::PreGameplayEffectExecute(struct FGameplayEffectModCallbackData& Data)
 {
@@ -22,6 +23,7 @@ void UPCAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModC
 	}
 
 	static FProperty* HealthProperty = FindFieldChecked<FProperty>(UPCAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UPCAttributeSet, Health));
+	static FProperty* MovementProperty = FindFieldChecked<FProperty>(UPCAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UPCAttributeSet, Movement));
 
 	FProperty* ModifiedProperty = Data.EvaluatedData.Attribute.GetUProperty();
 
@@ -34,6 +36,14 @@ void UPCAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModC
 		{
 			AActor* Instigator = Data.EffectSpec.GetContext().GetInstigator();
 			ActionableComponent->HealthChanged(Health, Instigator);
+		}
+	}
+	else if (MovementProperty == ModifiedProperty)
+	{
+		APCUnit* UnitOwner = Cast<APCUnit>(GetOwningActor());
+		if (UnitOwner)
+		{
+			UnitOwner->SetNewMovementSpeed(Movement);
 		}
 	}
 }
