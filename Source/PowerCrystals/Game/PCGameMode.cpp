@@ -124,69 +124,14 @@ void APCGameMode::SpawnPlayerBaseAndUnits(AController* Controller)
 		if (InitialPlayerBuilding)
 		{
 			FTransform StartTransform = FTransform(StartRotation, StartLocation);
-			InitialBuilding = SpawnPlayerBuilding(StartTransform, InitialPlayerBuilding, PCController);
+			InitialBuilding = PCController->SpawnBuilding(InitialPlayerBuilding, StartTransform, false);
 		}
 
 		if (InitialBuilding)
 		{
-			FVector UnitsLocation = InitialBuilding->GetUnitsSpawnPoint()->GetComponentLocation();
-			FRotator UnitsRotation = InitialBuilding->GetUnitsSpawnPoint()->GetComponentRotation();
-			FVector SpawnDirection = (InitialBuilding->GetActorLocation() - UnitsLocation) * -1;
-			SpawnDirection.Normalize();
-			int32 index = 0;
-			for (TSubclassOf<APCUnit> UnitBlueprint : InitialPlayerUnits)
-			{
-				FVector LocationDirection = SpawnDirection.RotateAngleAxis(FMath::FRandRange(-90, 90), FVector::ZAxisVector);
-				FVector NewLocation = UnitsLocation + (LocationDirection * index * 200.0f);
-
-				FTransform StartTransform = FTransform(UnitsRotation, NewLocation);
-				SpawnPlayerUnit(StartTransform, UnitBlueprint, PCController);
-
-				index++;
-			}
+			InitialBuilding->SpawnPlayerUnits(InitialPlayerUnits);
 		}
 	}
-}
-
-APCUnit* APCGameMode::SpawnPlayerUnit(FTransform StartTransform, TSubclassOf<APCUnit> UnitBlueprint, APCPlayerController* PCController)
-{
-	UWorld* const World = GetWorld();
-	if (!World)
-	{
-		return nullptr;
-	}
-
-	APCUnit* NewUnit = World->SpawnActorDeferred<APCUnit>(UnitBlueprint, StartTransform, PCController, nullptr, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
-	if (NewUnit)
-	{
-		NewUnit->Team = PCController->Team;
-		NewUnit->Faction = PCController->Faction;
-		NewUnit->PlayerOwner = PCController;
-		NewUnit->FinishSpawning(StartTransform);
-	}
-
-	return NewUnit;
-}
-
-APCBuilding* APCGameMode::SpawnPlayerBuilding(FTransform StartTransform, TSubclassOf<APCBuilding> BuildingBlueprint, APCPlayerController* PCController)
-{
-	UWorld* const World = GetWorld();
-	if (!World)
-	{
-		return nullptr;
-	}
-
-	APCBuilding* NewBuilding = World->SpawnActorDeferred<APCBuilding>(BuildingBlueprint, StartTransform, PCController);
-	if (NewBuilding)
-	{
-		NewBuilding->Team = PCController->Team;
-		NewBuilding->Faction = PCController->Faction;
-		NewBuilding->PlayerOwner = PCController;
-		NewBuilding->HasPreview = false;
-		NewBuilding->FinishSpawning(StartTransform);
-	}
-
-	return NewBuilding;
 }
 
 APCUnit* APCGameMode::SpawnEnemyUnit(FTransform StartTransform, TSubclassOf<APCUnit> UnitBlueprint)

@@ -31,6 +31,9 @@ public:
 	UFUNCTION(BlueprintPure)
 	class UPCAbilitySystemComponent* GetAbilitySystemComponent();
 
+	UFUNCTION(BlueprintCallable)
+	void UnblockInput();
+
 	/** Whether the execution of this ability blocks the input or not. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AbilityConfig)
 	bool BlocksInput;

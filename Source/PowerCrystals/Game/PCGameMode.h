@@ -53,12 +53,6 @@ private:
 
 	void SpawnPlayerBaseAndUnits(AController* Controller);
 
-	void SpawnInitialEnemyUnits();
-
-	APCUnit* SpawnPlayerUnit(FTransform StartTransform, TSubclassOf<APCUnit> UnitBlueprint, APCPlayerController* PCController);
-
-	APCBuilding* SpawnPlayerBuilding(FTransform StartTransform, TSubclassOf<APCBuilding> BuildingBlueprint, APCPlayerController* PCController);
-
 	APCUnit* SpawnEnemyUnit(FTransform StartTransform, TSubclassOf<APCUnit> UnitBlueprint);
 
 	int32 CurrentTeamIndex;

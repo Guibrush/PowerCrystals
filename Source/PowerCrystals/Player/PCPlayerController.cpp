@@ -182,8 +182,6 @@ void APCPlayerController::NotifyServerNewSelection_Implementation(const TArray<A
 		{
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetPawn(), SelectionTag, FGameplayEventData());
 		}
-
-		InputBlocked = false;
 	}
 	else
 	{
@@ -206,8 +204,6 @@ void APCPlayerController::NotifyServerNewAction_Implementation(FHitResult Hit)
 		{
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetPawn(), ActionTag, FGameplayEventData());
 		}
-
-		InputBlocked = false;
 	}
 	else
 	{
@@ -259,7 +255,7 @@ void APCPlayerController::NotifyServerNewAbility_Implementation(FGameplayTag Abi
 	}
 }
 
-APCBuilding* APCPlayerController::SpawnBuilding(TSubclassOf<APCBuilding> BuildingBlueprint)
+APCBuilding* APCPlayerController::SpawnBuilding(TSubclassOf<APCBuilding> BuildingBlueprint, FTransform StartTransform, bool WithPreview)
 {
 	UWorld* const World = GetWorld();
 	if (!World)
@@ -267,17 +263,22 @@ APCBuilding* APCPlayerController::SpawnBuilding(TSubclassOf<APCBuilding> Buildin
 		return nullptr;
 	}
 
-	APCBuilding* NewBuilding = World->SpawnActorDeferred<APCBuilding>(BuildingBlueprint, GetPawn()->GetTransform(), this);
+	APCBuilding* NewBuilding = World->SpawnActorDeferred<APCBuilding>(BuildingBlueprint, StartTransform, this);
 	if (NewBuilding)
 	{
 		NewBuilding->Team = Team;
 		NewBuilding->Faction = Faction;
 		NewBuilding->PlayerOwner = this;
-		NewBuilding->HasPreview = true;
+		NewBuilding->HasPreview = WithPreview;
 		NewBuilding->FinishSpawning(GetPawn()->GetTransform());
 	}
 
 	return NewBuilding;
+}
+
+void APCPlayerController::UnblockInput()
+{
+	InputBlocked = false;
 }
 
 void APCPlayerController::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
