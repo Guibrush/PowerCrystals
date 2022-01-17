@@ -19,11 +19,16 @@ APCPlayerController::APCPlayerController()
 	DefaultMouseCursor = EMouseCursor::Crosshairs;
 
 	InputBlocked = false;
+
+	TurnRight = false;
+	TurnLeft = false;
 }
 
 void APCPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
+
+	CheckTurnValues();
 }
 
 void APCPlayerController::SetupInputComponent()
@@ -41,6 +46,12 @@ void APCPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Action", IE_Released, this, &APCPlayerController::ActionReleased);
 
 	InputComponent->BindAxis("Zoom", this, &APCPlayerController::Zoom);
+
+	InputComponent->BindAction("TurnRight", IE_Pressed, this, &APCPlayerController::TurnRightPressed);
+	InputComponent->BindAction("TurnRight", IE_Released, this, &APCPlayerController::TurnRightReleased);
+
+	InputComponent->BindAction("TurnLeft", IE_Pressed, this, &APCPlayerController::TurnLeftPressed);
+	InputComponent->BindAction("TurnLeft", IE_Released, this, &APCPlayerController::TurnLeftReleased);
 }
 
 void APCPlayerController::MoveForward(float Value)
@@ -156,6 +167,50 @@ void APCPlayerController::Zoom(float Value)
 	if (MyCharacter)
 	{
 		MyCharacter->Zoom(Value);
+	}
+}
+
+void APCPlayerController::TurnRightPressed()
+{
+	TurnRight = true;
+}
+
+void APCPlayerController::TurnRightReleased()
+{
+	TurnRight = false;
+}
+
+void APCPlayerController::TurnLeftPressed()
+{
+	TurnLeft = true;
+}
+
+void APCPlayerController::TurnLeftReleased()
+{
+	TurnLeft = false;
+}
+
+void APCPlayerController::CheckTurnValues()
+{
+	float TurnValue = 0.0f;
+
+	if (TurnRight)
+	{
+		TurnValue += -1.0f;
+	}
+
+	if (TurnLeft)
+	{
+		TurnValue += 1.0f;
+	}
+
+	if (TurnValue != 0.0f)
+	{
+		APCPlayerCharacter* const MyCharacter = Cast<APCPlayerCharacter>(GetPawn());
+		if (MyCharacter)
+		{
+			MyCharacter->AddCameraRotation(TurnValue);
+		}
 	}
 }
 

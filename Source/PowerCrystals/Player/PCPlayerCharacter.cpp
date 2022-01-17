@@ -55,6 +55,10 @@ APCPlayerCharacter::APCPlayerCharacter()
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
 	CameraZoomSpeed = 20.0f;
+	CameraRotationSpeed = 1.0f;
+	MaxCameraRotationSpeed = 10.0f;
+	CameraRotationDecelerateSpeed = 2.0f;
+	CurrentCameraRotationSpeed = 0.0f;
 }
 
 void APCPlayerCharacter::Tick(float DeltaSeconds)
@@ -71,6 +75,14 @@ void APCPlayerCharacter::Tick(float DeltaSeconds)
 		CursorToWorld->SetWorldLocation(TraceHitResult.Location);
 		CursorToWorld->SetWorldRotation(CursorR);
 	}
+
+	if (!FMath::IsNearlyZero(CurrentCameraRotationSpeed))
+	{
+		FRotator Rotation = FRotator(0.0f, CurrentCameraRotationSpeed * DeltaSeconds, 0.0f);
+		AddActorWorldRotation(Rotation);
+
+		CurrentCameraRotationSpeed = FMath::Lerp(CurrentCameraRotationSpeed, 0.0f, DeltaSeconds * CameraRotationDecelerateSpeed);
+	}
 }
 
 void APCPlayerCharacter::MoveForward(float Value)
@@ -86,6 +98,12 @@ void APCPlayerCharacter::MoveRight(float Value)
 void APCPlayerCharacter::Zoom(float Value)
 {
 	CameraBoom->TargetArmLength += Value * CameraZoomSpeed;
+}
+
+void APCPlayerCharacter::AddCameraRotation(float Value)
+{
+	CurrentCameraRotationSpeed += Value * CameraRotationSpeed;
+	CurrentCameraRotationSpeed = FMath::Clamp(CurrentCameraRotationSpeed, MaxCameraRotationSpeed * -1.0f, MaxCameraRotationSpeed);
 }
 
 bool APCPlayerCharacter::ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit)

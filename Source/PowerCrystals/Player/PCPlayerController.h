@@ -71,6 +71,12 @@ protected:
 
 	void Zoom(float Value);
 
+	void TurnRightPressed();
+	void TurnRightReleased();
+
+	void TurnLeftPressed();
+	void TurnLeftReleased();
+
 private:
 
 	UFUNCTION(Server, Reliable)
@@ -84,7 +90,12 @@ private:
 
 	void DeselectAllActors();
 
+	void CheckTurnValues();
+
 	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+
+	bool TurnRight;
+	bool TurnLeft;
 };
 
 

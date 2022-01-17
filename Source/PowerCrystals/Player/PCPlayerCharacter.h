@@ -34,6 +34,8 @@ public:
 
 	void Zoom(float Value);
 
+	void AddCameraRotation(float Value);
+
 	UFUNCTION(BlueprintCallable)
 	bool ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit);
 
@@ -42,6 +44,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float CameraZoomSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float CameraRotationSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float MaxCameraRotationSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float CameraRotationDecelerateSpeed;
 
 private:
 	/** Top down camera */
@@ -59,5 +70,7 @@ private:
 	/** The ability system component. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AbilitySystem, meta = (AllowPrivateAccess = "true"))
 	class UPCAbilitySystemComponent* AbilitySystem;
+
+	float CurrentCameraRotationSpeed;
 
 };
