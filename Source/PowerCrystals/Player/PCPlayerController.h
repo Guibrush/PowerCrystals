@@ -21,7 +21,10 @@ public:
 	void ExecuteAbility(FGameplayTag AbilityTag, bool BlocksInput);
 
 	UFUNCTION(BlueprintCallable)
-	class APCBuilding* SpawnBuilding(TSubclassOf<class APCBuilding> BuildingBlueprint);
+	class APCBuilding* SpawnBuilding(TSubclassOf<class APCBuilding> BuildingBlueprint, FTransform StartTransform, bool WithPreview = true);
+
+	UFUNCTION(BlueprintCallable)
+	void UnblockInput();
 
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	TArray<AActor*> SelectedActors;

@@ -4,6 +4,7 @@
 #include "PCAbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "../Player/PCPlayerController.h"
+#include "../Components/PCActionableActorComponent.h"
 
 void UPCAbilitySystemComponent::BeginPlay()
 {

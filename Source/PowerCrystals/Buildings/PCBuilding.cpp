@@ -4,17 +4,24 @@
 #include "PCBuilding.h"
 #include "../Abilities/PCAbilitySystemComponent.h"
 #include "../Abilities/PCAttributeSet.h"
+#include "../Components/PCActionableActorComponent.h"
+#include "../Player/PCPlayerController.h"
+#include "../Tasks/PCTaskSystemComponent.h"
+#include "../Units/PCUnit.h"
 #include "Components/BoxComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SceneComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Net/UnrealNetwork.h"
-#include "../Components/PCActionableActorComponent.h"
-#include "../Player/PCPlayerController.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "NavigationSystem.h"
 #include "NavAreas/NavArea_Null.h"
 #include "NavAreas/NavArea_Default.h"
+#include "Engine/ActorChannel.h"
+#include "EnvironmentQuery/EnvQuery.h"
+#include "EnvironmentQuery/EnvQueryOption.h"
+#include "EnvironmentQuery/Tests/EnvQueryTest_Overlap.h"
 
 // Sets default values
 APCBuilding::APCBuilding()
@@ -56,6 +63,8 @@ APCBuilding::APCBuilding()
 	ActionableActorComponent = CreateDefaultSubobject<UPCActionableActorComponent>("ActionableActorComponent");
 	ActionableActorComponent->InitComponent(false, true);
 	ActionableActorComponent->SetIsReplicated(true);
+
+	TaskSystem = CreateDefaultSubobject<UPCTaskSystemComponent>("TaskSystem");
 
 	IsDestroyed = false;
 	IsInPreview = false;
@@ -132,6 +141,18 @@ void APCBuilding::Tick(float DeltaTime)
 	}
 }
 
+bool APCBuilding::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+	bool bReturn = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+	for (UPCTask* PCTask : TaskSystem->GetActiveTasks())
+	{
+		bReturn |= Channel->ReplicateSubobject(PCTask, *Bunch, *RepFlags);
+	}
+
+	return bReturn;
+}
+
 void APCBuilding::ServerNewMouseProjectedPoint_Implementation(FVector NewPoint)
 {
 	MouseProjectedPoint = NewPoint;
@@ -174,27 +195,34 @@ void APCBuilding::InitPreviewMode()
 	MulticastNewBuildingModeAndCollision(IsInConstruction, IsInPreview, ECollisionEnabled::NoCollision);
 }
 
-void APCBuilding::InitConstructionMode()
+bool APCBuilding::InitConstructionMode()
 {
-	IsInConstruction = true;
-	IsInPreview = false;
-
-	BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	BoxComponent->SetCanEverAffectNavigation(true);
-
-	float ConstructionTime = 0.0f;
-	UPCAttributeSet* AttributeSet = Cast<UPCAttributeSet>(AbilitySystem->GetSpawnedAttributes()[0]);
-	if (AttributeSet)
+	if (IsInPreview && !IsInConstruction && ValidPosition)
 	{
-		ConstructionTime = AttributeSet->ConstructionTime;
+		IsInConstruction = true;
+		IsInPreview = false;
+
+		BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		BoxComponent->SetCanEverAffectNavigation(true);
+
+		float ConstructionTime = 0.0f;
+		UPCAttributeSet* AttributeSet = Cast<UPCAttributeSet>(AbilitySystem->GetSpawnedAttributes()[0]);
+		if (AttributeSet)
+		{
+			ConstructionTime = AttributeSet->ConstructionTime;
+		}
+
+		FTimerHandle TimerHandle;
+		GetWorldTimerManager().SetTimer(TimerHandle, this, &APCBuilding::BuildingConstructed, ConstructionTime, false);
+
+		BPInitConstructionMode();
+
+		MulticastNewBuildingModeAndCollision(IsInConstruction, IsInPreview, ECollisionEnabled::QueryAndPhysics);
+
+		return true;
 	}
 
-	FTimerHandle TimerHandle;
-	GetWorldTimerManager().SetTimer(TimerHandle, this, &APCBuilding::BuildingConstructed, ConstructionTime, false);
-
-	BPInitConstructionMode();
-
-	MulticastNewBuildingModeAndCollision(IsInConstruction, IsInPreview, ECollisionEnabled::QueryAndPhysics);
+	return false;
 }
 
 void APCBuilding::BuildingConstructed()
@@ -238,6 +266,111 @@ void APCBuilding::MulticastNewBuildingModeAndCollision_Implementation(bool NewIs
 	}
 
 	BPNewBuildingMode(NewIsInConstruction, NewIsInPreview);
+}
+
+bool APCBuilding::ExecuteAbility(FGameplayTag InputAbilityTag, FHitResult Hit)
+{
+	if (IsDestroyed || !AbilitySystem)
+	{
+		return false;
+	}
+
+	return AbilitySystem->ActivateAbility(InputAbilityTag, Hit, PlayerOwner);
+}
+
+bool APCBuilding::SpawnPlayerUnits(TArray<TSubclassOf<APCUnit>> UnitBlueprints)
+{
+	UWorld* const World = GetWorld();
+	if (!World)
+	{
+		return false;
+	}
+
+	if (!HasAuthority())
+	{
+		return false;
+	}
+
+	if (UnitBlueprints.Num() <= 0)
+	{
+		return false;
+	}
+
+	TArray<UEnvQueryOption*> QueryOptions = SpawnUnitsLocationQuery->GetOptionsMutable();
+	for (UEnvQueryOption* Option : QueryOptions)
+	{
+		for (TObjectPtr<UEnvQueryTest> Test : Option->Tests)
+		{
+			UEnvQueryTest_Overlap* TestOverlap = Cast<UEnvQueryTest_Overlap>(Test);
+			if (TestOverlap)
+			{
+				TestOverlap->OverlapData.ExtentX = UnitBlueprints[0].GetDefaultObject()->GetCapsuleComponent()->GetScaledCapsuleRadius();
+				TestOverlap->OverlapData.ExtentY = UnitBlueprints[0].GetDefaultObject()->GetCapsuleComponent()->GetScaledCapsuleRadius();
+				TestOverlap->OverlapData.ExtentZ = UnitBlueprints[0].GetDefaultObject()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 2;
+				TestOverlap->OverlapData.ShapeOffset = FVector(0.0f, 0.0f, TestOverlap->OverlapData.ExtentZ);
+			}
+		}
+	}
+
+	FEnvQueryRequest UnitsSpawnLocationQueryRequest = FEnvQueryRequest(SpawnUnitsLocationQuery, this);
+	UnitsSpawnLocationQueryRequest.Execute(EEnvQueryRunMode::AllMatching, this, &APCBuilding::SpawnUnitsQueryFinished);
+	UnitToSpawnBlueprints = UnitBlueprints;
+
+	return true;
+}
+
+void APCBuilding::SpawnUnitsQueryFinished(TSharedPtr<FEnvQueryResult> Result)
+{
+	UWorld* const World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	if (UnitToSpawnBlueprints.Num() <= 0)
+	{
+		return;
+	}
+
+	if (!Result)
+	{
+		return;
+	}
+
+	TArray<FVector> ResultLocations;
+	Result->GetAllAsLocations(ResultLocations);
+	if (ResultLocations.Num() > 0)
+	{
+		int32 index = 0;
+		for (TSubclassOf<APCUnit> UnitBlueprint : UnitToSpawnBlueprints)
+		{
+			if (ResultLocations.Num() > index)
+			{
+				FVector UnitLocation = ResultLocations[index];
+				FRotator UnitRotation = UnitsSpawnPoint->GetComponentRotation();
+				FTransform StartTransform = FTransform(UnitRotation, UnitLocation);
+				APCUnit* NewUnit = World->SpawnActorDeferred<APCUnit>(UnitBlueprint, StartTransform, PlayerOwner, nullptr, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
+				if (NewUnit)
+				{
+					NewUnit->Team = Team;
+					NewUnit->Faction = Faction;
+					NewUnit->PlayerOwner = PlayerOwner;
+					NewUnit->FinishSpawning(StartTransform);
+				}
+
+				index++;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
 }
 
 UAbilitySystemComponent* APCBuilding::GetAbilitySystemComponent() const

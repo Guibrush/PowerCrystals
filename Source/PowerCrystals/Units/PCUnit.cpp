@@ -89,12 +89,7 @@ void APCUnit::TargetDied_Implementation(APCUnit* KillerActor, AActor* ActorKille
 
 bool APCUnit::ExecuteAbility(FGameplayTag InputAbilityTag, FHitResult Hit)
 {
-	if (IsDead)
-	{
-		return false;
-	}
-
-	if (!AbilitySystem)
+	if (IsDead || !AbilitySystem)
 	{
 		return false;
 	}

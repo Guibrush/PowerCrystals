@@ -37,6 +37,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit);
 
+	UFUNCTION(BlueprintCallable)
+	void SpawnPlayerUnit(TSubclassOf<class APCUnit> UnitBlueprint);
+
 	UFUNCTION(BlueprintPure)
 	bool IsAlive();
 
@@ -48,6 +51,9 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	FGameplayTag GetFaction();
+
+	UFUNCTION(BlueprintPure)
+	class APCPlayerController* GetControllerOwner();
 
 	UPROPERTY(BlueprintReadOnly)
 	bool IsUnit;

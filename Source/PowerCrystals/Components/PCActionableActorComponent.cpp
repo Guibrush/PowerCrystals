@@ -127,11 +127,25 @@ bool UPCActionableActorComponent::ExecuteAbility(FGameplayTag AbilityTag, FHitRe
 		APCBuilding* BuildingOwner = GetOwner<APCBuilding>();
 		if (BuildingOwner)
 		{
-			// TODO: Execute abilities for buildings???
+			return BuildingOwner->ExecuteAbility(AbilityTag, Hit);
 		}
 	}
 
 	return false;
+}
+
+void UPCActionableActorComponent::SpawnPlayerUnit(TSubclassOf<APCUnit> UnitBlueprint)
+{
+	if (IsBuilding)
+	{
+		APCBuilding* BuildingOwner = GetOwner<APCBuilding>();
+		if (BuildingOwner)
+		{
+			TArray<TSubclassOf<APCUnit>> UnitBlueprints;
+			UnitBlueprints.Add(UnitBlueprint);
+			BuildingOwner->SpawnPlayerUnits(UnitBlueprints);
+		}
+	}
 }
 
 UPCAbilitySystemComponent* UPCActionableActorComponent::GetAbilitySystem()
@@ -187,4 +201,26 @@ FGameplayTag UPCActionableActorComponent::GetFaction()
 	}
 
 	return FGameplayTag::EmptyTag;
+}
+
+APCPlayerController* UPCActionableActorComponent::GetControllerOwner()
+{
+	if (IsUnit)
+	{
+		APCUnit* UnitOwner = GetOwner<APCUnit>();
+		if (UnitOwner)
+		{
+			return UnitOwner->PlayerOwner;
+		}
+	}
+	else if (IsBuilding)
+	{
+		APCBuilding* BuildingOwner = GetOwner<APCBuilding>();
+		if (BuildingOwner)
+		{
+			return BuildingOwner->PlayerOwner;
+		}
+	}
+
+	return nullptr;
 }

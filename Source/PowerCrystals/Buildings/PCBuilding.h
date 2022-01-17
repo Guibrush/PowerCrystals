@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "GameplayTagContainer.h"
 #include "AbilitySystemInterface.h"
+#include "EnvironmentQuery/EnvQueryManager.h"
 #include "PCBuilding.generated.h"
 
 UCLASS()
@@ -17,8 +18,8 @@ public:
 	// Sets default values for this actor's properties
 	APCBuilding();
 
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 
 	/** Returns ability system component. **/
 	FORCEINLINE class UPCAbilitySystemComponent* GetAbilitySystem() { return AbilitySystem; }
@@ -29,9 +30,13 @@ public:
 
 	FORCEINLINE class UPCActionableActorComponent* GetActionableActorComponent() { return ActionableActorComponent; }
 
+	FORCEINLINE class UPCTaskSystemComponent* GetTaskSystem() { return TaskSystem; }
+
 	// Begin IAbilitySystemInterface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	// End IAbilitySystemInterface
+
+	void SpawnUnitsQueryFinished(TSharedPtr<FEnvQueryResult> Result);
 
 	UFUNCTION(BlueprintNativeEvent)
 	void BuildingSelected();
@@ -61,16 +66,25 @@ public:
 	void InitPreviewMode();
 
 	UFUNCTION(BlueprintCallable)
-	void InitConstructionMode();
+	bool InitConstructionMode();
 
 	UFUNCTION(BlueprintCallable)
 	void BuildingConstructed();
+
+	UFUNCTION(BlueprintCallable)
+	bool ExecuteAbility(FGameplayTag InputAbilityTag, FHitResult Hit);
+
+	UFUNCTION(BlueprintCallable)
+	bool SpawnPlayerUnits(TArray<TSubclassOf<APCUnit>> UnitBlueprints);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastNewBuildingModeAndCollision(bool NewIsInConstruction, bool NewIsInPreview, ECollisionEnabled::Type NewCollisionMode);
 
 	UFUNCTION(Server, Reliable)
 	void ServerNewMouseProjectedPoint(FVector NewPoint);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UEnvQuery* SpawnUnitsLocationQuery;
 
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	FGameplayTag Team;
@@ -121,6 +135,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ActionableActor, meta = (AllowPrivateAccess = "true"))
 	class UPCActionableActorComponent* ActionableActorComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Building, meta = (AllowPrivateAccess = "true"))
+	class UPCTaskSystemComponent* TaskSystem;
+
 private:
 
 	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
@@ -129,5 +146,7 @@ private:
 
 	UPROPERTY(Replicated)
 	FVector MouseProjectedPoint;
+
+	TArray<TSubclassOf<APCUnit>> UnitToSpawnBlueprints;
 
 };
