@@ -75,6 +75,114 @@ void UPCTaskSystemComponent::AddNewTask(TSubclassOf<UPCTask> NewTask)
 	}
 }
 
+bool UPCTaskSystemComponent::PauseCurrentTask()
+{
+	AActor* Owner = GetOwner<AActor>();
+	if (!Owner)
+	{
+		return false;
+	}
+
+	if (!Owner->HasAuthority())
+	{
+		ServerSetPauseCurrentTask(true);
+		return true;
+	}
+	else
+	{
+		if (ActiveTasks.Num() > 0)
+		{
+			UPCTask* CurrentTask = ActiveTasks[0];
+			if (CurrentTask && CurrentTask->GetTaskState() == ETaskState::Activated)
+			{
+				return CurrentTask->PauseTask();
+			}
+		}
+	}
+
+	return false;
+}
+
+bool UPCTaskSystemComponent::UnPauseCurrentTask()
+{
+	AActor* Owner = GetOwner<AActor>();
+	if (!Owner)
+	{
+		return false;
+	}
+
+	if (!Owner->HasAuthority())
+	{
+		ServerSetPauseCurrentTask(false);
+		return true;
+	}
+	else
+	{
+		if (ActiveTasks.Num() > 0)
+		{
+			UPCTask* CurrentTask = ActiveTasks[0];
+			if (CurrentTask && CurrentTask->GetTaskState() == ETaskState::Paused)
+			{
+				return CurrentTask->ActivateTask();
+			}
+		}
+	}
+
+	return false;
+}
+
+bool UPCTaskSystemComponent::CancelTask(int32 TaskIndex)
+{
+	AActor* Owner = GetOwner<AActor>();
+	if (!Owner)
+	{
+		return false;
+	}
+
+	if (!Owner->HasAuthority())
+	{
+		ServerCancelTask(TaskIndex);
+		return true;
+	}
+	else
+	{
+		if (ActiveTasks.Num() > TaskIndex)
+		{
+			UPCTask* TaskToCancel = ActiveTasks[TaskIndex];
+			if (TaskToCancel &&
+				(TaskToCancel->GetTaskState() == ETaskState::Queued ||
+					TaskToCancel->GetTaskState() == ETaskState::Activated ||
+					TaskToCancel->GetTaskState() == ETaskState::Paused))
+			{
+				if (TaskToCancel->CancelTask())
+				{
+					ActiveTasks.RemoveAt(TaskIndex);
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
+void UPCTaskSystemComponent::ServerCancelTask_Implementation(int32 TaskIndex)
+{
+	CancelTask(TaskIndex);
+}
+
+void UPCTaskSystemComponent::ServerSetPauseCurrentTask_Implementation(bool NewPause)
+{
+	if (NewPause)
+	{
+		PauseCurrentTask();
+	}
+	else
+	{
+		UnPauseCurrentTask();
+	}
+}
+
 TArray<UPCTask*> UPCTaskSystemComponent::GetActiveTasks() const
 {
 	return ActiveTasks;

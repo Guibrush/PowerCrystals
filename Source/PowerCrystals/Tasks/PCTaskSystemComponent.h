@@ -25,6 +25,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AddNewTask(TSubclassOf<class UPCTask> NewTask);
 
+	UFUNCTION(BlueprintCallable)
+	bool PauseCurrentTask();
+
+	UFUNCTION(BlueprintCallable)
+	bool UnPauseCurrentTask();
+
+	UFUNCTION(BlueprintCallable)
+	bool CancelTask(int32 TaskIndex = 0);
+
 	UFUNCTION(BlueprintPure)
 	TArray<UPCTask*> GetActiveTasks() const;
 
@@ -41,5 +50,11 @@ protected:
 private:
 
 	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+
+	UFUNCTION(Server, Reliable)
+	void ServerCancelTask(int32 TaskIndex);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSetPauseCurrentTask(bool NewPause);
 		
 };

@@ -45,6 +45,23 @@ bool UPCTask::ActivateTask()
 	return false;
 }
 
+bool UPCTask::PauseTask()
+{
+	if (CanPauseTask())
+	{
+		// Other necessary checks to ensure that this task has been properly paused
+		// before calling the blueprint code.
+
+		BP_PauseTask();
+
+		TaskState = ETaskState::Paused;
+
+		return true;
+	}
+
+	return false;
+}
+
 bool UPCTask::CompleteTask()
 {
 	if (CanCompleteTask())
@@ -55,6 +72,23 @@ bool UPCTask::CompleteTask()
 		BP_CompleteTask();
 
 		TaskState = ETaskState::Completed;
+
+		return true;
+	}
+
+	return false;
+}
+
+bool UPCTask::CancelTask()
+{
+	if (CanCancelTask())
+	{
+		// Other necessary checks to ensure that this task has been properly cancelled
+		// before calling the blueprint code.
+
+		BP_CancelTask();
+
+		TaskState = ETaskState::Cancelled;
 
 		return true;
 	}
@@ -76,11 +110,25 @@ bool UPCTask::CanActivateTask()
 	return BP_CanActivateTask();
 }
 
+bool UPCTask::CanPauseTask()
+{
+	// Other checks before calling the blueprint code.
+
+	return BP_CanPauseTask();
+}
+
 bool UPCTask::CanCompleteTask()
 {
 	// Other checks before calling the blueprint code.
 
 	return BP_CanCompleteTask();
+}
+
+bool UPCTask::CanCancelTask()
+{
+	// Other checks before calling the blueprint code.
+
+	return BP_CanCancelTask();
 }
 
 bool UPCTask::BP_CanQueueTask_Implementation()
@@ -101,7 +149,25 @@ bool UPCTask::BP_CanActivateTask_Implementation()
 	return true;
 }
 
+bool UPCTask::BP_CanPauseTask_Implementation()
+{
+	// This function is meant to be implemented in blueprints.
+	// The only reason why this exist is because we need to
+	// return true by default in case the blueprint doesn't
+	// want to implement it.
+	return true;
+}
+
 bool UPCTask::BP_CanCompleteTask_Implementation()
+{
+	// This function is meant to be implemented in blueprints.
+	// The only reason why this exist is because we need to
+	// return true by default in case the blueprint doesn't
+	// want to implement it.
+	return true;
+}
+
+bool UPCTask::BP_CanCancelTask_Implementation()
 {
 	// This function is meant to be implemented in blueprints.
 	// The only reason why this exist is because we need to
