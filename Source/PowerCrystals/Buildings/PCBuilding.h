@@ -7,10 +7,11 @@
 #include "GameplayTagContainer.h"
 #include "AbilitySystemInterface.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
+#include "../PCActionableActorInterface.h"
 #include "PCBuilding.generated.h"
 
 UCLASS()
-class POWERCRYSTALS_API APCBuilding : public AActor, public IAbilitySystemInterface
+class POWERCRYSTALS_API APCBuilding : public AActor, public IAbilitySystemInterface, public IPCActionableActorInterface
 {
 	GENERATED_BODY()
 	
@@ -20,9 +21,6 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
-
-	/** Returns ability system component. **/
-	FORCEINLINE class UPCAbilitySystemComponent* GetAbilitySystem() { return AbilitySystem; }
 
 	FORCEINLINE class USceneComponent* GetUnitsSpawnPoint() { return UnitsSpawnPoint; }
 
@@ -35,6 +33,18 @@ public:
 	// Begin IAbilitySystemInterface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	// End IAbilitySystemInterface
+
+	// Begin IActionableActorInterface
+	virtual bool ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit) override;
+	virtual void ActorSelected() override;
+	virtual void ActorDeselected() override;
+	virtual void SpawnPlayerUnit(TSubclassOf<class APCUnit> UnitBlueprint) override;
+	virtual bool IsAlive() override;
+	virtual class UPCAbilitySystemComponent* GetAbilitySystem() override;
+	virtual FGameplayTag GetTeam() override;
+	virtual FGameplayTag GetFaction() override;
+	virtual class APCPlayerController* GetControllerOwner() override;
+	// End IActionableActorInterface
 
 	void SpawnUnitsQueryFinished(TSharedPtr<FEnvQueryResult> Result);
 
@@ -72,7 +82,7 @@ public:
 	void BuildingConstructed();
 
 	UFUNCTION(BlueprintCallable)
-	bool ExecuteAbility(FGameplayTag InputAbilityTag, FHitResult Hit);
+	bool ExecuteBuildingAbility(FGameplayTag InputAbilityTag, FHitResult Hit);
 
 	UFUNCTION(BlueprintCallable)
 	bool SpawnPlayerUnits(TArray<TSubclassOf<APCUnit>> UnitBlueprints);

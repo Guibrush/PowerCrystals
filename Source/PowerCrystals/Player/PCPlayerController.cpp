@@ -7,8 +7,8 @@
 #include "../Units/PCUnit.h"
 #include "../Buildings/PCBuilding.h"
 #include "../UI/PCHUD.h"
-#include "../Components/PCActionableActorComponent.h"
 #include "../Abilities/PCGameplayAbility.h"
+#include "../PCActionableActorInterface.h"
 #include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemBlueprintLibrary.h"
@@ -118,11 +118,11 @@ void APCPlayerController::SelectionReleased()
 
 			if (Hit.GetActor())
 			{
-				UPCActionableActorComponent* ActionableComponent = Cast<UPCActionableActorComponent>(Hit.GetActor()->GetComponentByClass(UPCActionableActorComponent::StaticClass()));
-				if (ActionableComponent && (ActionableComponent->GetTeam() == Team))
+				IPCActionableActorInterface* ActionableActor = Cast<IPCActionableActorInterface>(Hit.GetActor());
+				if (ActionableActor)
 				{
 					SelectedActors.AddUnique(Hit.GetActor());
-					ActionableComponent->ActorSelected();
+					ActionableActor->ActorSelected();
 				}
 			}
 		}
@@ -138,10 +138,10 @@ void APCPlayerController::DeselectAllActors()
 	// Deselect all the actors previously selected
 	for (AActor* SelectedActor : SelectedActors)
 	{
-		UPCActionableActorComponent* ActionableComponent = Cast<UPCActionableActorComponent>(SelectedActor->GetComponentByClass(UPCActionableActorComponent::StaticClass()));
-		if (ActionableComponent)
+		IPCActionableActorInterface* ActionableActor = Cast<IPCActionableActorInterface>(SelectedActor);
+		if (ActionableActor)
 		{
-			ActionableComponent->ActorDeselected();
+			ActionableActor->ActorDeselected();
 		}
 	}
 
@@ -266,10 +266,10 @@ void APCPlayerController::NotifyServerNewAction_Implementation(FHitResult Hit)
 		{
 			for (AActor* SelectedActor : SelectedActors)
 			{
-				UPCActionableActorComponent* ActionableComponent = Cast<UPCActionableActorComponent>(SelectedActor->GetComponentByClass(UPCActionableActorComponent::StaticClass()));
-				if (ActionableComponent)
+				IPCActionableActorInterface* ActionableActor = Cast<IPCActionableActorInterface>(SelectedActor);
+				if (ActionableActor)
 				{
-					ActionableComponent->ExecuteAbility(ActionTag, Hit);
+					ActionableActor->ExecuteAbility(ActionTag, Hit);
 				}
 			}
 		}
@@ -298,10 +298,10 @@ void APCPlayerController::NotifyServerNewAbility_Implementation(FGameplayTag Abi
 	{
 		for (AActor* SelectedActor : SelectedActors)
 		{
-			UPCActionableActorComponent* ActionableComponent = Cast<UPCActionableActorComponent>(SelectedActor->GetComponentByClass(UPCActionableActorComponent::StaticClass()));
-			if (ActionableComponent)
+			IPCActionableActorInterface* ActionableActor = Cast<IPCActionableActorInterface>(SelectedActor);
+			if (ActionableActor)
 			{
-				if (ActionableComponent->ExecuteAbility(AbilityTag, Hit))
+				if (ActionableActor->ExecuteAbility(AbilityTag, Hit))
 				{
 					InputBlocked = BlocksInput;
 				}

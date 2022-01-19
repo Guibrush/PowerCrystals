@@ -61,7 +61,6 @@ APCBuilding::APCBuilding()
 	UnitsRallyPoint->SetupAttachment(BoxComponent);
 
 	ActionableActorComponent = CreateDefaultSubobject<UPCActionableActorComponent>("ActionableActorComponent");
-	ActionableActorComponent->InitComponent(false, true);
 	ActionableActorComponent->SetIsReplicated(true);
 
 	TaskSystem = CreateDefaultSubobject<UPCTaskSystemComponent>("TaskSystem");
@@ -179,7 +178,11 @@ void APCBuilding::BuildingHealthChanged_Implementation(float NewValue, AActor* A
 void APCBuilding::BuildingDestroyed_Implementation(AActor* Killer)
 {
 	IsDestroyed = true;
-	ActionableActorComponent->OnDied.Broadcast(Killer, this);
+
+	if (ActionableActorComponent)
+	{
+		ActionableActorComponent->ActorDied(Killer);
+	}
 }
 
 void APCBuilding::InitPreviewMode()
@@ -268,7 +271,7 @@ void APCBuilding::MulticastNewBuildingModeAndCollision_Implementation(bool NewIs
 	BPNewBuildingMode(NewIsInConstruction, NewIsInPreview);
 }
 
-bool APCBuilding::ExecuteAbility(FGameplayTag InputAbilityTag, FHitResult Hit)
+bool APCBuilding::ExecuteBuildingAbility(FGameplayTag InputAbilityTag, FHitResult Hit)
 {
 	if (IsDestroyed || !AbilitySystem)
 	{
@@ -376,6 +379,53 @@ void APCBuilding::SpawnUnitsQueryFinished(TSharedPtr<FEnvQueryResult> Result)
 UAbilitySystemComponent* APCBuilding::GetAbilitySystemComponent() const
 {
 	return AbilitySystem;
+}
+
+bool APCBuilding::ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit)
+{
+	return ExecuteBuildingAbility(AbilityTag, Hit);
+}
+
+void APCBuilding::ActorSelected()
+{
+	BuildingSelected();
+}
+
+void APCBuilding::ActorDeselected()
+{
+	BuildingDeselected();
+}
+
+void APCBuilding::SpawnPlayerUnit(TSubclassOf<class APCUnit> UnitBlueprint)
+{
+	TArray<TSubclassOf<APCUnit>> UnitBlueprints;
+	UnitBlueprints.Add(UnitBlueprint);
+	SpawnPlayerUnits(UnitBlueprints);
+}
+
+bool APCBuilding::IsAlive()
+{
+	return !IsDestroyed;
+}
+
+UPCAbilitySystemComponent* APCBuilding::GetAbilitySystem()
+{
+	return AbilitySystem;
+}
+
+FGameplayTag APCBuilding::GetTeam()
+{
+	return Team;
+}
+
+FGameplayTag APCBuilding::GetFaction()
+{
+	return Faction;
+}
+
+APCPlayerController* APCBuilding::GetControllerOwner()
+{
+	return PlayerOwner;
 }
 
 void APCBuilding::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const

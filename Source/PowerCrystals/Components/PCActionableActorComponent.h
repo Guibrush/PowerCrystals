@@ -23,16 +23,19 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	void InitComponent(bool NewIsUnit, bool NewIsBuilding);
-
-	void HealthChanged(float NewHealth, AActor* Attacker);
-
 	void ActorSelected();
 
 	void ActorDeselected();
 
+	void HealthChanged(float NewHealth, AActor* Attacker);
+
+	void ActorDied(AActor* Killer);
+
 	UFUNCTION(NetMulticast, Reliable)
 	void HealthChangedMulticast(float NewHealth, AActor* Attacker);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void ActorDiedMulticast(AActor* Killer);
 
 	UFUNCTION(BlueprintCallable)
 	bool ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit);
@@ -55,12 +58,6 @@ public:
 	UFUNCTION(BlueprintPure)
 	class APCPlayerController* GetControllerOwner();
 
-	UPROPERTY(BlueprintReadOnly)
-	bool IsUnit;
-
-	UPROPERTY(BlueprintReadOnly)
-	bool IsBuilding;
-
 	UPROPERTY(BlueprintAssignable)
 	FOnHealthChanged OnHealthChanged;
 
@@ -70,5 +67,6 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
-		
+
+	class IPCActionableActorInterface* ActionableActor;
 };

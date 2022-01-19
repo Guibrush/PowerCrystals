@@ -19,7 +19,6 @@ APCUnit::APCUnit()
 	AbilitySystem = CreateDefaultSubobject<UPCAbilitySystemComponent>("AbilitySystem");
 
 	ActionableActorComponent = CreateDefaultSubobject<UPCActionableActorComponent>("ActionableActorComponent");
-	ActionableActorComponent->InitComponent(true, false);
 	ActionableActorComponent->SetIsReplicated(true);
 }
 
@@ -76,7 +75,11 @@ void APCUnit::UnitDied_Implementation(AActor* Killer)
 	CancelCurrentAbility();
 
 	IsDead = true;
-	ActionableActorComponent->OnDied.Broadcast(Killer, this);
+
+	if (ActionableActorComponent)
+	{
+		ActionableActorComponent->ActorDied(Killer);
+	}
 }
 
 void APCUnit::TargetDied_Implementation(APCUnit* KillerActor, AActor* ActorKilled)
@@ -87,7 +90,7 @@ void APCUnit::TargetDied_Implementation(APCUnit* KillerActor, AActor* ActorKille
 	}
 }
 
-bool APCUnit::ExecuteAbility(FGameplayTag InputAbilityTag, FHitResult Hit)
+bool APCUnit::ExecuteUnitAbility(FGameplayTag InputAbilityTag, FHitResult Hit)
 {
 	if (IsDead || !AbilitySystem)
 	{
@@ -96,17 +99,17 @@ bool APCUnit::ExecuteAbility(FGameplayTag InputAbilityTag, FHitResult Hit)
 
 	CancelCurrentAbility();
 
-	UPCActionableActorComponent* TargetActionableComponent;
+	IPCActionableActorInterface* ActionableActor;
 	if (Hit.GetActor())
 	{
-		TargetActionableComponent = Cast<UPCActionableActorComponent>(Hit.GetActor()->GetComponentByClass(UPCActionableActorComponent::StaticClass()));
+		ActionableActor = Cast<IPCActionableActorInterface>(Hit.GetActor());
 	}
 	else
 	{
-		TargetActionableComponent = nullptr;
+		ActionableActor = nullptr;
 	}
 
-	if (!TargetActionableComponent && Hit.bBlockingHit && (InputAbilityTag == PlayerOwner->ActionTag))
+	if (!ActionableActor && Hit.bBlockingHit && (InputAbilityTag == PlayerOwner->ActionTag))
 	{
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(Controller, Hit.Location);
 		return true;
@@ -115,11 +118,15 @@ bool APCUnit::ExecuteAbility(FGameplayTag InputAbilityTag, FHitResult Hit)
 	bool AbilityActivated = AbilitySystem->ActivateAbility(InputAbilityTag, Hit, PlayerOwner);
 	if (AbilityActivated && Hit.GetActor())
 	{
-		if (TargetActionableComponent && TargetActionableComponent->IsAlive())
+		if (ActionableActor && ActionableActor->IsAlive())
 		{
-			OnTargetDiedDelegate = FScriptDelegate();
-			OnTargetDiedDelegate.BindUFunction(this, "TargetDied");
-			TargetActionableComponent->OnDied.Add(OnTargetDiedDelegate);
+			UPCActionableActorComponent* TargetActionableComponent = Cast<UPCActionableActorComponent>(Hit.GetActor()->GetComponentByClass(UPCActionableActorComponent::StaticClass()));
+			if (TargetActionableComponent)
+			{
+				OnTargetDiedDelegate = FScriptDelegate();
+				OnTargetDiedDelegate.BindUFunction(this, "TargetDied");
+				TargetActionableComponent->OnDied.Add(OnTargetDiedDelegate);
+			}
 		}
 	}
 
@@ -162,6 +169,51 @@ void APCUnit::SetNewMovementSpeed(float NewMovementSpeed)
 UAbilitySystemComponent* APCUnit::GetAbilitySystemComponent() const
 {
 	return AbilitySystem;
+}
+
+bool APCUnit::ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit)
+{
+	return ExecuteUnitAbility(AbilityTag, Hit);
+}
+
+void APCUnit::ActorSelected()
+{
+	UnitSelected();
+}
+
+void APCUnit::ActorDeselected()
+{
+	UnitDeselected();
+}
+
+void APCUnit::SpawnPlayerUnit(TSubclassOf<class APCUnit> UnitBlueprint)
+{
+
+}
+
+bool APCUnit::IsAlive()
+{
+	return !IsDead;
+}
+
+UPCAbilitySystemComponent* APCUnit::GetAbilitySystem()
+{
+	return AbilitySystem;
+}
+
+FGameplayTag APCUnit::GetTeam()
+{
+	return Team;
+}
+
+FGameplayTag APCUnit::GetFaction()
+{
+	return Faction;
+}
+
+APCPlayerController* APCUnit::GetControllerOwner()
+{
+	return PlayerOwner;
 }
 
 void APCUnit::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const

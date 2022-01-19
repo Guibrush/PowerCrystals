@@ -4,15 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "../PCMeshMergeFunctionLibrary.h"
 #include "GameplayTagContainer.h"
+#include "../PCMeshMergeFunctionLibrary.h"
 #include "../Abilities/PCAbilitySystemComponent.h"
 #include "../Player/PCPlayerController.h"
+#include "../PCActionableActorInterface.h"
 #include "AbilitySystemInterface.h"
 #include "PCUnit.generated.h"
 
 UCLASS()
-class POWERCRYSTALS_API APCUnit : public ACharacter, public IAbilitySystemInterface
+class POWERCRYSTALS_API APCUnit : public ACharacter, public IAbilitySystemInterface, public IPCActionableActorInterface
 {
 	GENERATED_BODY()
 
@@ -23,14 +24,23 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	/** Returns ability system component. **/
-	FORCEINLINE class UPCAbilitySystemComponent* GetAbilitySystem() { return AbilitySystem; }
-
 	FORCEINLINE class UPCActionableActorComponent* GetActionableActorComponent() { return ActionableActorComponent; }
 
 	// Begin IAbilitySystemInterface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	// End IAbilitySystemInterface
+
+	// Begin IActionableActorInterface
+	virtual bool ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit) override;
+	virtual void ActorSelected() override;
+	virtual void ActorDeselected() override;
+	virtual void SpawnPlayerUnit(TSubclassOf<class APCUnit> UnitBlueprint) override;
+	virtual bool IsAlive() override;
+	virtual class UPCAbilitySystemComponent* GetAbilitySystem() override;
+	virtual FGameplayTag GetTeam() override;
+	virtual FGameplayTag GetFaction() override;
+	virtual class APCPlayerController* GetControllerOwner() override;
+	// End IActionableActorInterface
 
 	UFUNCTION(BlueprintNativeEvent)
 	void UnitSelected();
@@ -48,7 +58,7 @@ public:
 	void TargetDied(APCUnit* KillerActor, AActor* ActorKilled);
 
 	UFUNCTION(BlueprintCallable)
-	bool ExecuteAbility(FGameplayTag InputAbilityTag, FHitResult Hit);
+	bool ExecuteUnitAbility(FGameplayTag InputAbilityTag, FHitResult Hit);
 
 	UFUNCTION(BlueprintCallable)
 	void CancelCurrentAbility();
