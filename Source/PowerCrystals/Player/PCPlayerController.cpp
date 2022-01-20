@@ -9,6 +9,7 @@
 #include "../UI/PCHUD.h"
 #include "../Abilities/PCGameplayAbility.h"
 #include "../PCActionableActorInterface.h"
+#include "../Game/PCCheatManager.h"
 #include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemBlueprintLibrary.h"
@@ -17,6 +18,8 @@ APCPlayerController::APCPlayerController()
 {
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Crosshairs;
+
+	CheatClass = UPCCheatManager::StaticClass();
 
 	InputBlocked = false;
 
