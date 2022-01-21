@@ -28,6 +28,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UnblockInput();
 
+	UFUNCTION(BlueprintCallable)
+	void SelectActors(TArray<AActor*> NewActors);
+
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	TArray<AActor*> SelectedActors;
 
@@ -92,6 +95,9 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void NotifyServerNewAbility(FGameplayTag AbilityTag, FHitResult Hit, bool BlocksInput);
+
+	UFUNCTION(Server, Reliable)
+	void NotifyServerNewTurnValue(float NewTurnValue);
 
 	void DeselectAllActors();
 

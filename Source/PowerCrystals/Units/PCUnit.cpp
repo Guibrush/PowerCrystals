@@ -176,6 +176,16 @@ bool APCUnit::ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit)
 	return ExecuteUnitAbility(AbilityTag, Hit);
 }
 
+bool APCUnit::AddTurnValue(float Value)
+{
+	return false;
+}
+
+void APCUnit::TurnPressed(float Value)
+{
+
+}
+
 void APCUnit::ActorSelected()
 {
 	UnitSelected();

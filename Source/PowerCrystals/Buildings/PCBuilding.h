@@ -34,6 +34,8 @@ public:
 
 	// Begin IActionableActorInterface
 	virtual bool ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit) override;
+	virtual bool AddTurnValue(float Value) override;
+	virtual void TurnPressed(float Value) override;
 	virtual void ActorSelected() override;
 	virtual void ActorDeselected() override;
 	virtual void SpawnPlayerUnit(TSubclassOf<class APCUnit> UnitBlueprint) override;
@@ -94,6 +96,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UEnvQuery* SpawnUnitsLocationQuery;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float BuildingRotationDegreeSteps;
 
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	FGameplayTag Team;

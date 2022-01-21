@@ -70,6 +70,8 @@ APCBuilding::APCBuilding()
 	IsInConstruction = false;
 	HasPreview = true;
 	ValidPosition = true;
+
+	BuildingRotationDegreeSteps = 45.0f;
 }
 
 // Called when the game starts or when spawned
@@ -384,6 +386,27 @@ UAbilitySystemComponent* APCBuilding::GetAbilitySystemComponent() const
 bool APCBuilding::ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit)
 {
 	return ExecuteBuildingAbility(AbilityTag, Hit);
+}
+
+bool APCBuilding::AddTurnValue(float Value)
+{
+	if (IsInPreview)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+void APCBuilding::TurnPressed(float Value)
+{
+	if (IsInPreview)
+	{
+		FRotator RotationToAdd = FRotator(0.0f, BuildingRotationDegreeSteps * Value, 0.0f);
+		AddActorWorldRotation(RotationToAdd);
+	}
 }
 
 void APCBuilding::ActorSelected()

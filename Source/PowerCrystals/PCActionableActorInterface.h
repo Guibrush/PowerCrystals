@@ -21,6 +21,8 @@ class POWERCRYSTALS_API IPCActionableActorInterface
 public:
 
 	virtual bool ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit) = 0;
+	virtual bool AddTurnValue(float Value) = 0;
+	virtual void TurnPressed(float Value) = 0;
 	virtual void ActorSelected() = 0;
 	virtual void ActorDeselected() = 0;
 	virtual void SpawnPlayerUnit(TSubclassOf<class APCUnit> UnitBlueprint) = 0;

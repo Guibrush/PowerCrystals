@@ -178,6 +178,8 @@ void APCPlayerController::Zoom(float Value)
 void APCPlayerController::TurnRightPressed()
 {
 	TurnRight = true;
+
+	NotifyServerNewTurnValue(1.0f);
 }
 
 void APCPlayerController::TurnRightReleased()
@@ -188,6 +190,8 @@ void APCPlayerController::TurnRightReleased()
 void APCPlayerController::TurnLeftPressed()
 {
 	TurnLeft = true;
+
+	NotifyServerNewTurnValue(-1.0f);
 }
 
 void APCPlayerController::TurnLeftReleased()
@@ -211,10 +215,23 @@ void APCPlayerController::CheckTurnValues()
 
 	if (TurnValue != 0.0f)
 	{
-		APCPlayerCharacter* const MyCharacter = Cast<APCPlayerCharacter>(GetPawn());
-		if (MyCharacter)
+		bool TurnValueUsed = false;
+		for (AActor* SelectedActor : SelectedActors)
 		{
-			MyCharacter->AddCameraRotation(TurnValue);
+			IPCActionableActorInterface* ActionableActor = Cast<IPCActionableActorInterface>(SelectedActor);
+			if (ActionableActor)
+			{
+				TurnValueUsed |= ActionableActor->AddTurnValue(TurnValue);
+			}
+		}
+
+		if (!TurnValueUsed)
+		{
+			APCPlayerCharacter* const MyCharacter = Cast<APCPlayerCharacter>(GetPawn());
+			if (MyCharacter)
+			{
+				MyCharacter->AddCameraRotation(TurnValue);
+			}
 		}
 	}
 }
@@ -238,10 +255,8 @@ void APCPlayerController::NotifyServerNewSelection_Implementation(const TArray<A
 				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(SelectedActor, SelectionTag, FGameplayEventData());
 			}
 		}
-		else
-		{
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetPawn(), SelectionTag, FGameplayEventData());
-		}
+
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetPawn(), SelectionTag, FGameplayEventData());
 	}
 	else
 	{
@@ -260,10 +275,8 @@ void APCPlayerController::NotifyServerNewAction_Implementation(FHitResult Hit)
 				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(SelectedActor, ActionTag, FGameplayEventData());
 			}
 		}
-		else
-		{
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetPawn(), ActionTag, FGameplayEventData());
-		}
+
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetPawn(), ActionTag, FGameplayEventData());
 	}
 	else
 	{
@@ -315,6 +328,18 @@ void APCPlayerController::NotifyServerNewAbility_Implementation(FGameplayTag Abi
 	}
 }
 
+void APCPlayerController::NotifyServerNewTurnValue_Implementation(float NewTurnValue)
+{
+	for (AActor* SelectedActor : SelectedActors)
+	{
+		IPCActionableActorInterface* ActionableActor = Cast<IPCActionableActorInterface>(SelectedActor);
+		if (ActionableActor)
+		{
+			ActionableActor->TurnPressed(NewTurnValue);
+		}
+	}
+}
+
 APCBuilding* APCPlayerController::SpawnBuilding(TSubclassOf<APCBuilding> BuildingBlueprint, FTransform StartTransform, bool WithPreview)
 {
 	UWorld* const World = GetWorld();
@@ -339,6 +364,27 @@ APCBuilding* APCPlayerController::SpawnBuilding(TSubclassOf<APCBuilding> Buildin
 void APCPlayerController::UnblockInput()
 {
 	InputBlocked = false;
+}
+
+void APCPlayerController::SelectActors(TArray<AActor*> NewActors)
+{
+	if (NewActors.Num() > 0)
+	{
+		DeselectAllActors();
+
+		for (AActor* Actor : NewActors)
+		{
+			IPCActionableActorInterface* ActionableActor = Cast<IPCActionableActorInterface>(Actor);
+			if (ActionableActor && (ActionableActor->GetTeam() == Team) && (ActionableActor->IsAlive()))
+			{
+				SelectedActors.AddUnique(Actor);
+				ActionableActor->ActorSelected();
+			}
+			// Make something to select other actors who are not the player units and/or buildings?
+		}
+
+		NotifyServerNewSelection(SelectedActors);
+	}
 }
 
 void APCPlayerController::ActionableActorDied(AActor* Killer, AActor* ActorKilled)
