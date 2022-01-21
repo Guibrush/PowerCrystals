@@ -206,6 +206,21 @@ bool APCUnit::IsAlive()
 	return !IsDead;
 }
 
+bool APCUnit::IsPreview()
+{
+	return false;
+}
+
+bool APCUnit::IsConstruction()
+{
+	return false;
+}
+
+float APCUnit::GetConstructionTime()
+{
+	return 0.0f;
+}
+
 UPCAbilitySystemComponent* APCUnit::GetAbilitySystem()
 {
 	return AbilitySystem;

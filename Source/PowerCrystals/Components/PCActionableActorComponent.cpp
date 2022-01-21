@@ -86,6 +86,36 @@ bool UPCActionableActorComponent::IsAlive()
 	return false;
 }
 
+bool UPCActionableActorComponent::IsInPreview()
+{
+	if (ActionableActor)
+	{
+		return ActionableActor->IsPreview();
+	}
+
+	return false;
+}
+
+bool UPCActionableActorComponent::IsInConstruction()
+{
+	if (ActionableActor)
+	{
+		return ActionableActor->IsConstruction();
+	}
+
+	return false;
+}
+
+float UPCActionableActorComponent::GetConstructionTime()
+{
+	if (ActionableActor)
+	{
+		return ActionableActor->GetConstructionTime();
+	}
+
+	return 0.0f;
+}
+
 bool UPCActionableActorComponent::ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit)
 {
 	if (ActionableActor)

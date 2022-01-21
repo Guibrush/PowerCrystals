@@ -47,6 +47,15 @@ public:
 	bool IsAlive();
 
 	UFUNCTION(BlueprintPure)
+	bool IsInPreview();
+
+	UFUNCTION(BlueprintPure)
+	bool IsInConstruction();
+
+	UFUNCTION(BlueprintPure)
+	float GetConstructionTime();
+
+	UFUNCTION(BlueprintPure)
 	class UPCAbilitySystemComponent* GetAbilitySystem();
 
 	UFUNCTION(BlueprintPure)

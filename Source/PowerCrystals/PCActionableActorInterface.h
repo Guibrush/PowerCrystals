@@ -27,6 +27,9 @@ public:
 	virtual void ActorDeselected() = 0;
 	virtual void SpawnPlayerUnit(TSubclassOf<class APCUnit> UnitBlueprint) = 0;
 	virtual bool IsAlive() = 0;
+	virtual bool IsPreview() = 0;
+	virtual bool IsConstruction() = 0;
+	virtual float GetConstructionTime() = 0;
 	virtual class UPCAbilitySystemComponent* GetAbilitySystem() = 0;
 	virtual FGameplayTag GetTeam() = 0;
 	virtual FGameplayTag GetFaction() = 0;

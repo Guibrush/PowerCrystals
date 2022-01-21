@@ -140,6 +140,19 @@ void APCBuilding::Tick(float DeltaTime)
 			ValidPosition = PointProjectedInNavMesh && (OutActors.Num() == 0);
 		}
 	}
+
+	if (IsInConstruction)
+	{
+		if (HasAuthority())
+		{
+			CurrentConstructionTime -= DeltaTime;
+
+			if (CurrentConstructionTime <= 0.0f)
+			{
+				BuildingConstructed();
+			}
+		}
+	}
 }
 
 bool APCBuilding::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
@@ -210,15 +223,15 @@ bool APCBuilding::InitConstructionMode()
 		BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		BoxComponent->SetCanEverAffectNavigation(true);
 
-		float ConstructionTime = 0.0f;
+		CurrentConstructionTime = 0.0f;
 		UPCAttributeSet* AttributeSet = Cast<UPCAttributeSet>(AbilitySystem->GetSpawnedAttributes()[0]);
 		if (AttributeSet)
 		{
-			ConstructionTime = AttributeSet->ConstructionTime;
+			CurrentConstructionTime = AttributeSet->ConstructionTime;
 		}
 
-		FTimerHandle TimerHandle;
-		GetWorldTimerManager().SetTimer(TimerHandle, this, &APCBuilding::BuildingConstructed, ConstructionTime, false);
+		//FTimerHandle TimerHandle;
+		//GetWorldTimerManager().SetTimer(TimerHandle, this, &APCBuilding::BuildingConstructed, ConstructionTime, false);
 
 		BPInitConstructionMode();
 
@@ -431,6 +444,21 @@ bool APCBuilding::IsAlive()
 	return !IsDestroyed;
 }
 
+bool APCBuilding::IsPreview()
+{
+	return IsInPreview;
+}
+
+bool APCBuilding::IsConstruction()
+{
+	return IsInConstruction;
+}
+
+float APCBuilding::GetConstructionTime()
+{
+	return CurrentConstructionTime;
+}
+
 UPCAbilitySystemComponent* APCBuilding::GetAbilitySystem()
 {
 	return AbilitySystem;
@@ -469,4 +497,5 @@ void APCBuilding::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLif
 	DOREPLIFETIME(APCBuilding, HasPreview);
 	DOREPLIFETIME(APCBuilding, ValidPosition);
 	DOREPLIFETIME(APCBuilding, MouseProjectedPoint);
+	DOREPLIFETIME(APCBuilding, CurrentConstructionTime);
 }

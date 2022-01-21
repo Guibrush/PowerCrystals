@@ -40,6 +40,9 @@ public:
 	virtual void ActorDeselected() override;
 	virtual void SpawnPlayerUnit(TSubclassOf<class APCUnit> UnitBlueprint) override;
 	virtual bool IsAlive() override;
+	virtual bool IsPreview() override;
+	virtual bool IsConstruction() override;
+	virtual float GetConstructionTime() override;
 	virtual class UPCAbilitySystemComponent* GetAbilitySystem() override;
 	virtual FGameplayTag GetTeam() override;
 	virtual FGameplayTag GetFaction() override;
@@ -123,6 +126,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	bool ValidPosition;
+
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	float CurrentConstructionTime;
 
 protected:
 	// Called when the game starts or when spawned
