@@ -26,8 +26,6 @@ public:
 
 	FORCEINLINE class USceneComponent* GetUnitsRallyPoint() { return UnitsRallyPoint; }
 
-	FORCEINLINE class UPCActionableActorComponent* GetActionableActorComponent() { return ActionableActorComponent; }
-
 	FORCEINLINE class UPCTaskSystemComponent* GetTaskSystem() { return TaskSystem; }
 
 	// Begin IAbilitySystemInterface
@@ -44,6 +42,7 @@ public:
 	virtual FGameplayTag GetTeam() override;
 	virtual FGameplayTag GetFaction() override;
 	virtual class APCPlayerController* GetControllerOwner() override;
+	virtual class UPCActionableActorComponent* GetActionableActorComponent() override;
 	// End IActionableActorInterface
 
 	void SpawnUnitsQueryFinished(TSharedPtr<FEnvQueryResult> Result);

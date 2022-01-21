@@ -17,6 +17,8 @@ class APCPlayerController : public APlayerController
 public:
 	APCPlayerController();
 
+	void ActionableActorDied(AActor* Killer, AActor* ActorKilled);
+
 	UFUNCTION(BlueprintCallable)
 	void ExecuteAbility(FGameplayTag AbilityTag, bool BlocksInput);
 
@@ -81,6 +83,9 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void NotifyServerNewSelection(const TArray<AActor*> &NewSelectedActors);
+
+	UFUNCTION(Server, Reliable)
+	void NotifyServerActionableActorDied(AActor* Killer, AActor* ActorKilled);
 
 	UFUNCTION(Server, Reliable)
 	void NotifyServerNewAction(FHitResult Hit);

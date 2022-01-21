@@ -29,4 +29,5 @@ public:
 	virtual FGameplayTag GetTeam() = 0;
 	virtual FGameplayTag GetFaction() = 0;
 	virtual class APCPlayerController* GetControllerOwner() = 0;
+	virtual class UPCActionableActorComponent* GetActionableActorComponent() = 0;
 };

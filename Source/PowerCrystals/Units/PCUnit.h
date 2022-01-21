@@ -24,8 +24,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	FORCEINLINE class UPCActionableActorComponent* GetActionableActorComponent() { return ActionableActorComponent; }
-
 	// Begin IAbilitySystemInterface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	// End IAbilitySystemInterface
@@ -40,6 +38,7 @@ public:
 	virtual FGameplayTag GetTeam() override;
 	virtual FGameplayTag GetFaction() override;
 	virtual class APCPlayerController* GetControllerOwner() override;
+	virtual class UPCActionableActorComponent* GetActionableActorComponent() override;
 	// End IActionableActorInterface
 
 	UFUNCTION(BlueprintNativeEvent)

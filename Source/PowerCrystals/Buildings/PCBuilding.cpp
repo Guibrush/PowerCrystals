@@ -428,6 +428,11 @@ APCPlayerController* APCBuilding::GetControllerOwner()
 	return PlayerOwner;
 }
 
+UPCActionableActorComponent* APCBuilding::GetActionableActorComponent()
+{
+	return ActionableActorComponent;
+}
+
 void APCBuilding::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

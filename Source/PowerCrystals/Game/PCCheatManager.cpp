@@ -13,14 +13,27 @@ void UPCCheatManager::DealDamageToSelectedActors()
 	APCPlayerController* PCController = Cast<APCPlayerController>(GetOuterAPlayerController());
 	if (PCController)
 	{
-		for (AActor* SelectedActor : PCController->SelectedActors)
+		TArray<AActor*> ActorsDamageApplied;
+		bool AllActorsDamaged = false;
+		int32 NumActorsSelected = PCController->SelectedActors.Num();
+		while (!AllActorsDamaged)
 		{
-			IAbilitySystemInterface* AbilitySystemActor = Cast<IAbilitySystemInterface>(SelectedActor);
-			if (AbilitySystemActor && AbilitySystemActor->GetAbilitySystemComponent())
+			for (int32 i = 0; i < NumActorsSelected; i++)
 			{
-				FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(DealDamageAbility, 1, 0);
-				AbilitySystemActor->GetAbilitySystemComponent()->GiveAbilityAndActivateOnce(AbilitySpec);
+				if ((i < PCController->SelectedActors.Num()) && !ActorsDamageApplied.Contains(PCController->SelectedActors[i]))
+				{
+					IAbilitySystemInterface* AbilitySystemActor = Cast<IAbilitySystemInterface>(PCController->SelectedActors[i]);
+					if (AbilitySystemActor && AbilitySystemActor->GetAbilitySystemComponent())
+					{
+						ActorsDamageApplied.Add(PCController->SelectedActors[i]);
+
+						FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(DealDamageAbility, 1, 0);
+						AbilitySystemActor->GetAbilitySystemComponent()->GiveAbilityAndActivateOnce(AbilitySpec);
+					}
+				}
 			}
+
+			AllActorsDamaged = ActorsDamageApplied.Num() == NumActorsSelected;
 		}
 	}
 }

@@ -10,6 +10,7 @@
 #include "../Abilities/PCGameplayAbility.h"
 #include "../PCActionableActorInterface.h"
 #include "../Game/PCCheatManager.h"
+#include "../Components/PCActionableActorComponent.h"
 #include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemBlueprintLibrary.h"
@@ -107,7 +108,7 @@ void APCPlayerController::SelectionReleased()
 		{
 			for (APCUnit* SelectedUnit : SelectedUnits)
 			{
-				if (SelectedUnit->Team == Team)
+				if ((SelectedUnit->Team == Team) && (SelectedUnit->IsAlive()))
 				{
 					SelectedActors.AddUnique(SelectedUnit);
 					SelectedUnit->UnitSelected();
@@ -122,11 +123,12 @@ void APCPlayerController::SelectionReleased()
 			if (Hit.GetActor())
 			{
 				IPCActionableActorInterface* ActionableActor = Cast<IPCActionableActorInterface>(Hit.GetActor());
-				if (ActionableActor)
+				if (ActionableActor && (ActionableActor->GetTeam() == Team) && (ActionableActor->IsAlive()))
 				{
 					SelectedActors.AddUnique(Hit.GetActor());
 					ActionableActor->ActorSelected();
 				}
+				// Make something to select other actors who are not the player units and/or buildings?
 			}
 		}
 
@@ -337,6 +339,28 @@ APCBuilding* APCPlayerController::SpawnBuilding(TSubclassOf<APCBuilding> Buildin
 void APCPlayerController::UnblockInput()
 {
 	InputBlocked = false;
+}
+
+void APCPlayerController::ActionableActorDied(AActor* Killer, AActor* ActorKilled)
+{
+	if (SelectedActors.Contains(ActorKilled))
+	{
+		IPCActionableActorInterface* ActionableActor = Cast<IPCActionableActorInterface>(ActorKilled);
+		if (ActionableActor)
+		{
+			ActionableActor->ActorDeselected();
+		}
+
+		SelectedActors.Remove(ActorKilled);
+		OnNewSelectedActors.Broadcast();
+	}
+
+	NotifyServerActionableActorDied(Killer, ActorKilled);
+}
+
+void APCPlayerController::NotifyServerActionableActorDied_Implementation(AActor* Killer, AActor* ActorKilled)
+{
+	SelectedActors.Remove(ActorKilled);
 }
 
 void APCPlayerController::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const

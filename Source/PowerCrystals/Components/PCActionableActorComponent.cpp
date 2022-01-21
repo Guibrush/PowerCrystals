@@ -58,6 +58,11 @@ void UPCActionableActorComponent::HealthChanged(float NewHealth, AActor* Attacke
 
 void UPCActionableActorComponent::ActorDied(AActor* Killer)
 {
+	if (ActionableActor && ActionableActor->GetControllerOwner())
+	{
+		ActionableActor->GetControllerOwner()->ActionableActorDied(Killer, GetOwner<AActor>());
+	}
+
 	ActorDiedMulticast(Killer);
 }
 
