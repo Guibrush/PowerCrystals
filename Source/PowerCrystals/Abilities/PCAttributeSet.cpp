@@ -10,7 +10,7 @@
 
 bool UPCAttributeSet::PreGameplayEffectExecute(struct FGameplayEffectModCallbackData& Data)
 {
-	return true;
+	return Super::PreGameplayEffectExecute(Data);
 }
 
 void UPCAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
@@ -54,7 +54,10 @@ void UPCAttributeSet::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& Ou
 
 	DOREPLIFETIME(UPCAttributeSet, MaxHealth);
 	DOREPLIFETIME(UPCAttributeSet, Health);
-	DOREPLIFETIME(UPCAttributeSet, Damage);
+	DOREPLIFETIME(UPCAttributeSet, Attack);
+	DOREPLIFETIME(UPCAttributeSet, AttackRange);
+	DOREPLIFETIME(UPCAttributeSet, AttackRate);
+	DOREPLIFETIME(UPCAttributeSet, Defense);
 	DOREPLIFETIME(UPCAttributeSet, Movement);
 	DOREPLIFETIME(UPCAttributeSet, ConstructionTime);
 }
