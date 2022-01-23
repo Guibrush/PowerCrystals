@@ -29,8 +29,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void CancelCurrentAbility(class APCPlayerController* PlayerController);
 
+	UFUNCTION(BlueprintPure)
+	TArray<FGameplayAttribute> GetActorAttributes();
+
 	UFUNCTION(BlueprintNativeEvent)
 	void AbilityEnded(UPCGameplayAbility* Ability);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FGameplayAttribute> ActorAttributes;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TMap<FGameplayTag, TSubclassOf<UPCGameplayAbility>> Abilities;

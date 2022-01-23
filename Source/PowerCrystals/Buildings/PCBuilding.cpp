@@ -253,6 +253,11 @@ void APCBuilding::BuildingConstructed()
 
 	BPBuildingConstructed();
 
+	if (ActionableActorComponent)
+	{
+		ActionableActorComponent->NewBuildingMode(IsInConstruction, IsInPreview);
+	}
+
 	MulticastNewBuildingModeAndCollision(IsInConstruction, IsInPreview, ECollisionEnabled::QueryAndPhysics);
 }
 

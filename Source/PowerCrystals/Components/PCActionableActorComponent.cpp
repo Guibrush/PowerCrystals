@@ -66,6 +66,11 @@ void UPCActionableActorComponent::ActorDied(AActor* Killer)
 	ActorDiedMulticast(Killer);
 }
 
+void UPCActionableActorComponent::NewBuildingMode(bool NewIsInConstruction, bool NewIsInPreview)
+{
+	NewBuildingModeMulticast(NewIsInConstruction, NewIsInPreview);
+}
+
 void UPCActionableActorComponent::HealthChangedMulticast_Implementation(float NewHealth, AActor* Attacker)
 {
 	OnHealthChanged.Broadcast(NewHealth, Attacker);
@@ -74,6 +79,11 @@ void UPCActionableActorComponent::HealthChangedMulticast_Implementation(float Ne
 void UPCActionableActorComponent::ActorDiedMulticast_Implementation(AActor* Killer)
 {
 	OnDied.Broadcast(Killer, GetOwner<AActor>());
+}
+
+void UPCActionableActorComponent::NewBuildingModeMulticast_Implementation(bool NewIsInConstruction, bool NewIsInPreview)
+{
+	OnNewBuildingMode.Broadcast(NewIsInConstruction, NewIsInPreview);
 }
 
 bool UPCActionableActorComponent::IsAlive()
