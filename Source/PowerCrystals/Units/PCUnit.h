@@ -79,6 +79,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = PCMesh)
 	FPCSkeletalMeshMergeParams MeshMergeParameters;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	class UPCWeaponData* WeaponData;
+
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	FGameplayTag Team;
 
