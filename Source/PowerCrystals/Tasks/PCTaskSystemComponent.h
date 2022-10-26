@@ -23,7 +23,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable)
-	void AddNewTask(TSubclassOf<class UPCTask> NewTask);
+	void AddNewTask(TSubclassOf<UPCTask> NewTask);
 
 	UFUNCTION(BlueprintCallable)
 	bool PauseCurrentTask();

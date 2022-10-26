@@ -18,6 +18,7 @@ public:
 
 	// Called every frame.
 	virtual void Tick(float DeltaSeconds) override;
+	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 
 	/** Returns TopDownCameraComponent subobject **/
 	FORCEINLINE class UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
@@ -27,6 +28,8 @@ public:
 	FORCEINLINE class UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
 	/** Returns ability system component. **/
 	FORCEINLINE class UPCAbilitySystemComponent* GetAbilitySystem() { return AbilitySystem; }
+	/** Returns tech tree system component. **/
+	FORCEINLINE class UPCTechTreeSystemComponent* GetTechTreeSystem() { return TechTreeSystem; }
 
 	/** Movement functions. */
 	void MoveForward(float Value);
@@ -36,11 +39,38 @@ public:
 
 	void AddCameraRotation(float Value);
 
+	UFUNCTION()
+	void OnUnitSpawned(AActor* BuildingSpawner, AActor* NewUnit);
+
 	UFUNCTION(BlueprintCallable)
 	bool ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit);
 
 	UFUNCTION(BlueprintCallable)
 	void CancelCurrentAbility();
+
+	UFUNCTION(BlueprintCallable)
+	class APCBuilding* SpawnBuilding(TSubclassOf<class APCBuilding> BuildingBlueprint, FTransform StartTransform, bool WithPreview = true);
+
+	UFUNCTION(BlueprintCallable)
+	void AddNewPlayerUnit(class APCUnit* NewUnit);
+
+	UFUNCTION(BlueprintCallable)
+	void RemovePlayerUnit(class APCUnit* UnitToRemove);
+
+	UFUNCTION(BlueprintCallable)
+	void AddNewPlayerBuilding(class APCBuilding* NewBuilding);
+
+	UFUNCTION(BlueprintCallable)
+	void RemovePlayerBuilding(class APCBuilding* BuildingToRemove);
+
+	UFUNCTION(BlueprintPure)
+	TArray<class APCUnit*> GetPlayerUnits() const;
+
+	UFUNCTION(BlueprintPure)
+	TArray<class APCBuilding*> GetPlayerBuildings() const;
+
+	UFUNCTION(BlueprintPure)
+	TArray<AActor*> GetPlayerActionableActors() const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float CameraZoomSpeed;
@@ -53,6 +83,14 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float CameraRotationDecelerateSpeed;
+
+protected:
+
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	TArray<class APCUnit*> PlayerUnits;
+
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	TArray<class APCBuilding*> PlayerBuildings;
 
 private:
 	/** Top down camera */
@@ -71,6 +109,12 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AbilitySystem, meta = (AllowPrivateAccess = "true"))
 	class UPCAbilitySystemComponent* AbilitySystem;
 
+	/** The tech tree system component. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = TechTree, meta = (AllowPrivateAccess = "true"))
+	class UPCTechTreeSystemComponent* TechTreeSystem;
+
 	float CurrentCameraRotationSpeed;
+
+	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
 };

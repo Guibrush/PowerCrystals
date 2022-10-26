@@ -53,6 +53,22 @@ void UPCAbilitySystemComponent::CancelCurrentAbility(APCPlayerController* Player
 	}
 }
 
+TArray<FGameplayAttribute> UPCAbilitySystemComponent::GetActorAttributes()
+{
+	TArray<FGameplayAttribute> AllAttributes;
+	GetAllAttributes(AllAttributes);
+	TArray<FGameplayAttribute> ReturnAttributes;
+	for (FGameplayAttribute Attribute : AllAttributes)
+	{
+		if (ActorAttributes.Contains(Attribute))
+		{
+			ReturnAttributes.Add(Attribute);
+		}
+	}
+
+	return ReturnAttributes;
+}
+
 void UPCAbilitySystemComponent::AbilityEnded_Implementation(UPCGameplayAbility* Ability)
 {
 	if (CurrentAbility.GetDefaultObject() == Ability)

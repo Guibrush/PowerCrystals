@@ -44,6 +44,7 @@ public:
 	virtual FGameplayTag GetFaction() override;
 	virtual class APCPlayerController* GetControllerOwner() override;
 	virtual class UPCActionableActorComponent* GetActionableActorComponent() override;
+	virtual class UPCTechTreeSystemComponent* GetOwningPlayerTechTreeSystem() override;
 	// End IActionableActorInterface
 
 	UFUNCTION(BlueprintNativeEvent)
@@ -78,6 +79,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = PCMesh)
 	FPCSkeletalMeshMergeParams MeshMergeParameters;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	class UPCWeaponData* WeaponData;
 
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	FGameplayTag Team;

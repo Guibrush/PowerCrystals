@@ -9,6 +9,8 @@
 #include "../Buildings/PCBuilding.h"
 #include "../Components/PCActionableActorComponent.h"
 #include "../Abilities/PCAttributeSet.h"
+#include "../Player/PCPlayerCharacter.h"
+#include "PCWeaponData.h"
 
 // Sets default values
 APCUnit::APCUnit()
@@ -25,7 +27,17 @@ APCUnit::APCUnit()
 // Called when the game starts or when spawned
 void APCUnit::BeginPlay()
 {
+	// This needs to be done before calling BeginPlay on the parent class because the BeginPlay
+	// calls all the BeginPlay functions on all the components and it is there where we are
+	// initializing the abilities in the UPCAbilitySystemComponent.
+	if (AbilitySystem)
+	{
+		AbilitySystem->Abilities.Add(WeaponData->AttackInputTag, WeaponData->AttackAbility);
+	}
+
 	Super::BeginPlay();
+
+	MeshMergeParameters.MeshesToMerge.Add(WeaponData->WeaponMesh);
 
 	USkeletalMesh* MergedMesh = UPCMeshMergeFunctionLibrary::MergeMeshes(MeshMergeParameters);
 	if (MergedMesh)
@@ -244,6 +256,20 @@ APCPlayerController* APCUnit::GetControllerOwner()
 UPCActionableActorComponent* APCUnit::GetActionableActorComponent()
 {
 	return ActionableActorComponent;
+}
+
+UPCTechTreeSystemComponent* APCUnit::GetOwningPlayerTechTreeSystem()
+{
+	if (PlayerOwner)
+	{
+		APCPlayerCharacter* PlayerCharacter = Cast<APCPlayerCharacter>(PlayerOwner->GetPawn());
+		if (PlayerCharacter)
+		{
+			return PlayerCharacter->GetTechTreeSystem();
+		}
+	}
+
+	return nullptr;
 }
 
 void APCUnit::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const

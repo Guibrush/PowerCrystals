@@ -9,6 +9,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthChanged, float, NewValue, AActor*, Attacker);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDied, AActor*, KillerActor, AActor*, ActorKilled);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnNewBuildingMode, AActor*, Building, bool, IsInConstruction, bool, IsInPreview);
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -31,11 +32,16 @@ public:
 
 	void ActorDied(AActor* Killer);
 
+	void NewBuildingMode(bool NewIsInConstruction, bool NewIsInPreview);
+
 	UFUNCTION(NetMulticast, Reliable)
 	void HealthChangedMulticast(float NewHealth, AActor* Attacker);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void ActorDiedMulticast(AActor* Killer);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void NewBuildingModeMulticast(bool NewIsInConstruction, bool NewIsInPreview);
 
 	UFUNCTION(BlueprintCallable)
 	bool ExecuteAbility(FGameplayTag AbilityTag, FHitResult Hit);
@@ -67,11 +73,17 @@ public:
 	UFUNCTION(BlueprintPure)
 	class APCPlayerController* GetControllerOwner();
 
+	UFUNCTION(BlueprintPure)
+	class UPCTechTreeSystemComponent* GetOwningPlayerTechTreeSystem();
+
 	UPROPERTY(BlueprintAssignable)
 	FOnHealthChanged OnHealthChanged;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnDied OnDied;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnNewBuildingMode OnNewBuildingMode;
 
 protected:
 	// Called when the game starts

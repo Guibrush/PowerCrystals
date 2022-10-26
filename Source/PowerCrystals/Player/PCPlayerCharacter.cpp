@@ -10,8 +10,14 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
+#include "Engine/ActorChannel.h"
+#include "Net/UnrealNetwork.h"
 #include "../Abilities/PCAbilitySystemComponent.h"
 #include "../Player/PCPlayerController.h"
+#include "../TechTree/PCTechTreeSystemComponent.h"
+#include "../TechTree/PCTech.h"
+#include "../Units/PCUnit.h"
+#include "../Buildings/PCBuilding.h"
 
 APCPlayerCharacter::APCPlayerCharacter()
 {
@@ -50,6 +56,8 @@ APCPlayerCharacter::APCPlayerCharacter()
 
 	AbilitySystem = CreateDefaultSubobject<UPCAbilitySystemComponent>("AbilitySystem");
 
+	TechTreeSystem = CreateDefaultSubobject<UPCTechTreeSystemComponent>("TechTreeSystem");
+
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
@@ -83,6 +91,18 @@ void APCPlayerCharacter::Tick(float DeltaSeconds)
 
 		CurrentCameraRotationSpeed = FMath::Lerp(CurrentCameraRotationSpeed, 0.0f, DeltaSeconds * CameraRotationDecelerateSpeed);
 	}
+}
+
+bool APCPlayerCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+	bool bReturn = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+	for (UPCTech* PCTech : TechTreeSystem->GetActiveTechs())
+	{
+		bReturn |= Channel->ReplicateSubobject(PCTech, *Bunch, *RepFlags);
+	}
+
+	return bReturn;
 }
 
 void APCPlayerCharacter::MoveForward(float Value)
@@ -138,4 +158,110 @@ void APCPlayerCharacter::CancelCurrentAbility()
 	}
 
 	AbilitySystem->CancelCurrentAbility(PC);
+}
+
+APCBuilding* APCPlayerCharacter::SpawnBuilding(TSubclassOf<APCBuilding> BuildingBlueprint, FTransform StartTransform, bool WithPreview)
+{
+	UWorld* const World = GetWorld();
+	if (!World)
+	{
+		return nullptr;
+	}
+
+	APCPlayerController* PlayerController = Cast<APCPlayerController>(GetController());
+	if (!PlayerController)
+	{
+		return nullptr;
+	}
+
+	APCBuilding* NewBuilding = World->SpawnActorDeferred<APCBuilding>(BuildingBlueprint, StartTransform, this);
+	if (NewBuilding)
+	{
+		NewBuilding->Team = PlayerController->Team;
+		NewBuilding->Faction = PlayerController->Faction;
+		NewBuilding->PlayerOwner = PlayerController;
+		NewBuilding->HasPreview = WithPreview;
+		NewBuilding->FinishSpawning(StartTransform);
+
+		FScriptDelegate OnUnitSpawnedDelegate = FScriptDelegate();
+		OnUnitSpawnedDelegate.BindUFunction(this, "OnUnitSpawned");
+		NewBuilding->OnUnitSpawned.Add(OnUnitSpawnedDelegate);
+
+		AddNewPlayerBuilding(NewBuilding);
+
+		TechTreeSystem->ApplyTechTree(NewBuilding);
+	}
+
+	return NewBuilding;
+}
+
+void APCPlayerCharacter::OnUnitSpawned(AActor* BuildingSpawner, AActor* NewUnit)
+{
+	APCUnit* Unit = Cast<APCUnit>(NewUnit);
+	if (Unit)
+	{
+		AddNewPlayerUnit(Unit);
+
+		TechTreeSystem->ApplyTechTree(Unit);
+	}
+}
+
+void APCPlayerCharacter::AddNewPlayerUnit(APCUnit* NewUnit)
+{
+	if (NewUnit)
+	{
+		PlayerUnits.Add(NewUnit);
+	}
+}
+
+void APCPlayerCharacter::RemovePlayerUnit(APCUnit* UnitToRemove)
+{
+	if (UnitToRemove)
+	{
+		PlayerUnits.Remove(UnitToRemove);
+	}
+}
+
+void APCPlayerCharacter::AddNewPlayerBuilding(APCBuilding* NewBuilding)
+{
+	if (NewBuilding)
+	{
+		PlayerBuildings.Add(NewBuilding);
+	}
+}
+
+void APCPlayerCharacter::RemovePlayerBuilding(APCBuilding* BuildingToRemove)
+{
+	if (BuildingToRemove)
+	{
+		PlayerBuildings.Remove(BuildingToRemove);
+	}
+}
+
+TArray<APCUnit*> APCPlayerCharacter::GetPlayerUnits() const
+{
+	return PlayerUnits;
+}
+
+TArray<APCBuilding*> APCPlayerCharacter::GetPlayerBuildings() const
+{
+	return PlayerBuildings;
+}
+
+TArray<AActor*> APCPlayerCharacter::GetPlayerActionableActors() const
+{
+	TArray<AActor*> ReturnActors;
+
+	ReturnActors.Append(PlayerUnits);
+	ReturnActors.Append(PlayerBuildings);
+
+	return ReturnActors;
+}
+
+void APCPlayerCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APCPlayerCharacter, PlayerUnits);
+	DOREPLIFETIME(APCPlayerCharacter, PlayerBuildings);
 }
