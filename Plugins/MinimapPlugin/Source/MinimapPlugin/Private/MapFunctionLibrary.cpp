@@ -177,7 +177,7 @@ TArray<UMapIconComponent*> UMapFunctionLibrary::BoxSelectInView(const FVector2D&
 	const FVector2D UVMin(FMath::Min(StartUV.X, EndUV.X), FMath::Min(StartUV.Y, EndUV.Y));
 	const FVector2D UVMax(FMath::Max(StartUV.X, EndUV.X), FMath::Max(StartUV.Y, EndUV.Y));
 
-	float U, V;
+	double U, V;
 	TArray<UMapIconComponent*> Results;
 	TArray<UMapIconComponent*> AllIcons = MapTracker->GetMapIcons();
 	for (UMapIconComponent* MapIcon : AllIcons)

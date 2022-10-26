@@ -68,7 +68,7 @@ public:
 	bool ViewContains(const FVector& WorldPos, const float WorldRadius) const;
 	// Convert world position to view position, where the boundaries represented by view size correspond to 0.0 and 1.0
 	UFUNCTION(BlueprintCallable, Category = "Minimap")
-	bool GetViewCoordinates(const FVector& WorldPos, bool bForceRectangular, float& U, float& V);
+	bool GetViewCoordinates(const FVector& WorldPos, bool bForceRectangular, double& U, double& V);
 	// Convert world yaw to view yaw
 	UFUNCTION(BlueprintCallable, Category = "Minimap")
 	void GetViewYaw(const float WorldYaw, float& Yaw);

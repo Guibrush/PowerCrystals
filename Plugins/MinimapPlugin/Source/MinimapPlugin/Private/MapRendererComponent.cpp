@@ -602,7 +602,8 @@ void UMapRendererComponent::DrawIcons(UCanvas* Canvas, const FVector2D& RenderRe
 	for (UMapIconComponent* MapIcon : MapIconsInView)
 	{
 		// Compute view coordinates
-		float U, V, Yaw;
+		double U, V;
+		float Yaw;
 		MapView->GetViewCoordinates(MapIcon->GetComponentLocation(), bIsCircular, U, V);
 		MapView->GetViewYaw(MapIcon->GetComponentRotation().Yaw, Yaw);
 

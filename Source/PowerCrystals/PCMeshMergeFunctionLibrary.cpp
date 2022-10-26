@@ -20,7 +20,7 @@ static void ToMergeParams(const TArray<FPCSkelMeshMergeSectionMapping_BP>& InSec
 	}
 };
 
-static void ToMergeParams(const TArray<FPCSkelMeshMergeUVTransformMapping>& InUVTransformsPerMesh, TArray<FSkelMeshMergeUVTransforms>& OutUVTransformsPerMesh)
+static void ToMergeParams(const TArray<FPCSkelMeshMergeUVTransformMapping>& InUVTransformsPerMesh, TArray<FSkelMeshMergeMeshUVTransforms>& OutUVTransformsPerMesh)
 {
 	if (InUVTransformsPerMesh.Num() > 0)
 	{
@@ -28,7 +28,8 @@ static void ToMergeParams(const TArray<FPCSkelMeshMergeUVTransformMapping>& InUV
 		OutUVTransformsPerMesh.AddUninitialized(InUVTransformsPerMesh.Num());
 		for (int32 i = 0; i < InUVTransformsPerMesh.Num(); ++i)
 		{
-			TArray<TArray<FTransform>>& OutUVTransforms = OutUVTransformsPerMesh[i].UVTransformsPerMesh;
+			//TArray<TArray<FTransform>>& OutUVTransforms = OutUVTransformsPerMesh[i].UVTransformsPerMesh;
+			TArray<FTransform>& OutUVTransforms = OutUVTransformsPerMesh[i].UVTransforms;
 			const TArray<FPCSkelMeshMergeUVTransform>& InUVTransforms = InUVTransformsPerMesh[i].UVTransformsPerMesh;
 			if (InUVTransforms.Num() > 0)
 			{
@@ -58,7 +59,9 @@ USkeletalMesh* UPCMeshMergeFunctionLibrary::MergeMeshes(const FPCSkeletalMeshMer
 
 	EMeshBufferAccess BufferAccess = Params.bNeedsCpuAccess ? EMeshBufferAccess::ForceCPUAndGPU : EMeshBufferAccess::Default;
 	TArray<FSkelMeshMergeSectionMapping> SectionMappings;
-	TArray<FSkelMeshMergeUVTransforms> UvTransforms;
+	TArray<FSkelMeshMergeMeshUVTransforms> UvTransforms;
+	FSkelMeshMergeUVTransformMapping* UvTransformsMapping = new FSkelMeshMergeUVTransformMapping();
+	UvTransformsMapping->UVTransformsPerMesh = UvTransforms;
 	ToMergeParams(Params.MeshSectionMappings, SectionMappings);
 	ToMergeParams(Params.UVTransformsPerMesh, UvTransforms);
 	bool bRunDuplicateCheck = false;
@@ -84,7 +87,7 @@ USkeletalMesh* UPCMeshMergeFunctionLibrary::MergeMeshes(const FPCSkeletalMeshMer
 		}
 	}
 
-	FSkeletalMeshMerge Merger(BaseMesh, MeshesToMergeCopy, SectionMappings, Params.StripTopLODS, BufferAccess, UvTransforms.GetData());
+	FSkeletalMeshMerge Merger(BaseMesh, MeshesToMergeCopy, SectionMappings, Params.StripTopLODS, BufferAccess, UvTransformsMapping);
 	if (!Merger.DoMerge())
 	{
 		UE_LOG(LogPowerCrystals, Warning, TEXT("Merge failed!"));

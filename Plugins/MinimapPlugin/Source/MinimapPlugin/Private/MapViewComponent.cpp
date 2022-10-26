@@ -156,7 +156,7 @@ bool UMapViewComponent::ViewContains(const FVector& WorldPos, const float WorldR
 	return DistanceSquared < ViewRadiusSquared;
 }
 
-bool UMapViewComponent::GetViewCoordinates(const FVector& WorldPos, bool bForceRectangular, float& U, float& V)
+bool UMapViewComponent::GetViewCoordinates(const FVector& WorldPos, bool bForceRectangular, double& U, double& V)
 {
 	UpdateTransformCache();
 
@@ -338,7 +338,7 @@ void UMapViewComponent::UpdateBackgroundCache()
 	{
 		// Reused variables
 		const FVector ViewPos = GetComponentLocation();
-		float TempU, TempV;
+		double TempU, TempV;
 
 		// Store the highest priority of surrounding backgrounds
 		BackgroundPriority = INT_MIN;

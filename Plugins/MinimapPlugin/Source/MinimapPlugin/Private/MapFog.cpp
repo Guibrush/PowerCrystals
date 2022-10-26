@@ -149,7 +149,7 @@ void AMapFog::Tick(float DeltaTime)
 
 bool AMapFog::GetFogAtLocation(const FVector& WorldLocation, const bool bRequireCurrentlyRevealing, float& RevealFactor)
 {
-	float U, V;
+	double U, V;
 	if (FogRenderTargetSize <= 0 || !GetMapView()->GetViewCoordinates(WorldLocation, false, U, V))
 		return false;
 	
@@ -161,7 +161,7 @@ bool AMapFog::GetFogAtLocation(const FVector& WorldLocation, const bool bRequire
 	{
 		// Read the render target into the buffer
 		UTextureRenderTarget2D* RelevantRenderTarget = bRequireCurrentlyRevealing ? RevealRT_Staging : PermanentRevealRT_A;
-		FTextureRenderTarget2DResource* TextureResource = (FTextureRenderTarget2DResource*) RelevantRenderTarget->Resource;
+		FTextureRenderTarget2DResource* TextureResource = (FTextureRenderTarget2DResource*) RelevantRenderTarget->GetResource();
 		TextureResource->ReadLinearColorPixels(RelevantBuffer);
 		checkf(RelevantBuffer.Num() > 0, TEXT("Expected pixels to be retrieved"));
 		

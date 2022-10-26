@@ -32,7 +32,7 @@ struct POWERCRYSTALS_API FPCSkelMeshMergeUVTransform
 
 	/** A list of how UVs should be transformed on a given mesh, where index represents a specific UV channel. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh Merge Params")
-	TArray<FTransform> UVTransforms;
+	FTransform UVTransforms;
 };
 
 /**
