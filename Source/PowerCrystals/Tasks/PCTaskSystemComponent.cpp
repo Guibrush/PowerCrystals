@@ -62,7 +62,7 @@ void UPCTaskSystemComponent::AddNewTask(TSubclassOf<UPCTask> NewTask)
 {
 	if (NewTask)
 	{
-		UPCTask* InstancedTask = NewObject<UPCTask>(GetOwner(), NewTask);
+		UPCTask* InstancedTask = NewObject<UPCTask>(this, NewTask);
 		if (InstancedTask)
 		{
 			InstancedTask->Owner = GetOwner();

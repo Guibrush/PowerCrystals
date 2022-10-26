@@ -10,6 +10,8 @@
 #include "../PCActionableActorInterface.h"
 #include "PCBuilding.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitSpawned, AActor*, BuildingSpawner, AActor*, NewUnit);
+
 UCLASS()
 class POWERCRYSTALS_API APCBuilding : public AActor, public IAbilitySystemInterface, public IPCActionableActorInterface
 {
@@ -48,6 +50,7 @@ public:
 	virtual FGameplayTag GetFaction() override;
 	virtual class APCPlayerController* GetControllerOwner() override;
 	virtual class UPCActionableActorComponent* GetActionableActorComponent() override;
+	virtual class UPCTechTreeSystemComponent* GetOwningPlayerTechTreeSystem() override;
 	// End IActionableActorInterface
 
 	void SpawnUnitsQueryFinished(TSharedPtr<FEnvQueryResult> Result);
@@ -129,6 +132,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	float CurrentConstructionTime;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnUnitSpawned OnUnitSpawned;
 
 protected:
 	// Called when the game starts or when spawned

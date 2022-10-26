@@ -83,7 +83,7 @@ void UPCActionableActorComponent::ActorDiedMulticast_Implementation(AActor* Kill
 
 void UPCActionableActorComponent::NewBuildingModeMulticast_Implementation(bool NewIsInConstruction, bool NewIsInPreview)
 {
-	OnNewBuildingMode.Broadcast(NewIsInConstruction, NewIsInPreview);
+	OnNewBuildingMode.Broadcast(GetOwner<AActor>(), NewIsInConstruction, NewIsInPreview);
 }
 
 bool UPCActionableActorComponent::IsAlive()
@@ -180,6 +180,16 @@ APCPlayerController* UPCActionableActorComponent::GetControllerOwner()
 	if (ActionableActor)
 	{
 		ActionableActor->GetControllerOwner();
+	}
+
+	return nullptr;
+}
+
+UPCTechTreeSystemComponent* UPCActionableActorComponent::GetOwningPlayerTechTreeSystem()
+{
+	if (ActionableActor)
+	{
+		return ActionableActor->GetOwningPlayerTechTreeSystem();
 	}
 
 	return nullptr;

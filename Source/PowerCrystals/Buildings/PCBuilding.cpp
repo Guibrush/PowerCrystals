@@ -6,6 +6,7 @@
 #include "../Abilities/PCAttributeSet.h"
 #include "../Components/PCActionableActorComponent.h"
 #include "../Player/PCPlayerController.h"
+#include "../Player/PCPlayerCharacter.h"
 #include "../Tasks/PCTaskSystemComponent.h"
 #include "../Units/PCUnit.h"
 #include "Components/BoxComponent.h"
@@ -384,6 +385,8 @@ void APCBuilding::SpawnUnitsQueryFinished(TSharedPtr<FEnvQueryResult> Result)
 					NewUnit->Faction = Faction;
 					NewUnit->PlayerOwner = PlayerOwner;
 					NewUnit->FinishSpawning(StartTransform);
+
+					OnUnitSpawned.Broadcast(this, NewUnit);
 				}
 
 				index++;
@@ -487,6 +490,20 @@ APCPlayerController* APCBuilding::GetControllerOwner()
 UPCActionableActorComponent* APCBuilding::GetActionableActorComponent()
 {
 	return ActionableActorComponent;
+}
+
+UPCTechTreeSystemComponent* APCBuilding::GetOwningPlayerTechTreeSystem()
+{
+	if (PlayerOwner)
+	{
+		APCPlayerCharacter* PlayerCharacter = Cast<APCPlayerCharacter>(PlayerOwner->GetPawn());
+		if (PlayerCharacter)
+		{
+			return PlayerCharacter->GetTechTreeSystem();
+		}
+	}
+
+	return nullptr;
 }
 
 void APCBuilding::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const

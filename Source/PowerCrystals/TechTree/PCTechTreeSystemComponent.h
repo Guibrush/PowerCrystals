@@ -4,57 +4,40 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "PCTask.h"
-#include "PCTaskSystemComponent.generated.h"
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnActiveTasksChanged);
+#include "PCTechTreeSystemComponent.generated.h"
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class POWERCRYSTALS_API UPCTaskSystemComponent : public UActorComponent
+class POWERCRYSTALS_API UPCTechTreeSystemComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
 	// Sets default values for this component's properties
-	UPCTaskSystemComponent();
+	UPCTechTreeSystemComponent();
 
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable)
-	void AddNewTask(TSubclassOf<UPCTask> NewTask);
+	void AddNewTech(TSubclassOf<class UPCTech> NewTech);
 
 	UFUNCTION(BlueprintCallable)
-	bool PauseCurrentTask();
-
-	UFUNCTION(BlueprintCallable)
-	bool UnPauseCurrentTask();
-
-	UFUNCTION(BlueprintCallable)
-	bool CancelTask(int32 TaskIndex = 0);
+	void ApplyTechTree(AActor* ActorToApply);
 
 	UFUNCTION(BlueprintPure)
-	TArray<UPCTask*> GetActiveTasks() const;
-
-	UPROPERTY(BlueprintAssignable)
-	FOnActiveTasksChanged OnActiveTasksChanged;
+	TArray<class UPCTech*> GetActiveTechs() const;
 
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
 	UPROPERTY(BlueprintReadOnly, Replicated)
-	TArray<UPCTask*> ActiveTasks;
+	TArray<class UPCTech*> ActiveTechs;
 
 private:
 
 	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
-	UFUNCTION(Server, Reliable)
-	void ServerCancelTask(int32 TaskIndex);
-
-	UFUNCTION(Server, Reliable)
-	void ServerSetPauseCurrentTask(bool NewPause);
 		
 };

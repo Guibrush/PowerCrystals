@@ -9,6 +9,7 @@
 #include "../Buildings/PCBuilding.h"
 #include "../Components/PCActionableActorComponent.h"
 #include "../Abilities/PCAttributeSet.h"
+#include "../Player/PCPlayerCharacter.h"
 #include "PCWeaponData.h"
 
 // Sets default values
@@ -255,6 +256,20 @@ APCPlayerController* APCUnit::GetControllerOwner()
 UPCActionableActorComponent* APCUnit::GetActionableActorComponent()
 {
 	return ActionableActorComponent;
+}
+
+UPCTechTreeSystemComponent* APCUnit::GetOwningPlayerTechTreeSystem()
+{
+	if (PlayerOwner)
+	{
+		APCPlayerCharacter* PlayerCharacter = Cast<APCPlayerCharacter>(PlayerOwner->GetPawn());
+		if (PlayerCharacter)
+		{
+			return PlayerCharacter->GetTechTreeSystem();
+		}
+	}
+
+	return nullptr;
 }
 
 void APCUnit::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const

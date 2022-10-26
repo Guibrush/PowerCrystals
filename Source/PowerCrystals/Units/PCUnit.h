@@ -44,6 +44,7 @@ public:
 	virtual FGameplayTag GetFaction() override;
 	virtual class APCPlayerController* GetControllerOwner() override;
 	virtual class UPCActionableActorComponent* GetActionableActorComponent() override;
+	virtual class UPCTechTreeSystemComponent* GetOwningPlayerTechTreeSystem() override;
 	// End IActionableActorInterface
 
 	UFUNCTION(BlueprintNativeEvent)

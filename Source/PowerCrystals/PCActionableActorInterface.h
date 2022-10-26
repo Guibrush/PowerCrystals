@@ -35,4 +35,5 @@ public:
 	virtual FGameplayTag GetFaction() = 0;
 	virtual class APCPlayerController* GetControllerOwner() = 0;
 	virtual class UPCActionableActorComponent* GetActionableActorComponent() = 0;
+	virtual class UPCTechTreeSystemComponent* GetOwningPlayerTechTreeSystem() = 0;
 };

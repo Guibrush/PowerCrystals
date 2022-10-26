@@ -70,7 +70,7 @@ void APCGameMode::StartPlay()
 	int32 index = 0;
 	for (TSubclassOf<APCUnit> EnemyBlueprint : InitialEnemyUnits)
 	{
-		FVector LocationDirection = FVector::XAxisVector.RotateAngleAxis(FMath::FRandRange(-180, 180), FVector::ZAxisVector);
+		FVector LocationDirection = FVector::XAxisVector.RotateAngleAxis(FMath::FRandRange(-180.0f, 180.0f), FVector::ZAxisVector);
 		FVector NewLocation = StartLocation + (LocationDirection * index * 250.0f);
 
 		FTransform StartTransform = FTransform(StartRotation, NewLocation);

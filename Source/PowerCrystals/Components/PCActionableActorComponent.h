@@ -9,7 +9,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthChanged, float, NewValue, AActor*, Attacker);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDied, AActor*, KillerActor, AActor*, ActorKilled);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNewBuildingMode, bool, IsInConstruction, bool, IsInPreview);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnNewBuildingMode, AActor*, Building, bool, IsInConstruction, bool, IsInPreview);
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -72,6 +72,9 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	class APCPlayerController* GetControllerOwner();
+
+	UFUNCTION(BlueprintPure)
+	class UPCTechTreeSystemComponent* GetOwningPlayerTechTreeSystem();
 
 	UPROPERTY(BlueprintAssignable)
 	FOnHealthChanged OnHealthChanged;

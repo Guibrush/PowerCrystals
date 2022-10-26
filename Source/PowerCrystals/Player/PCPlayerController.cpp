@@ -11,6 +11,7 @@
 #include "../PCActionableActorInterface.h"
 #include "../Game/PCCheatManager.h"
 #include "../Components/PCActionableActorComponent.h"
+#include "../Player/PCPlayerCharacter.h"
 #include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemBlueprintLibrary.h"
@@ -342,23 +343,13 @@ void APCPlayerController::NotifyServerNewTurnValue_Implementation(float NewTurnV
 
 APCBuilding* APCPlayerController::SpawnBuilding(TSubclassOf<APCBuilding> BuildingBlueprint, FTransform StartTransform, bool WithPreview)
 {
-	UWorld* const World = GetWorld();
-	if (!World)
+	APCPlayerCharacter* PlayerCharacter = Cast<APCPlayerCharacter>(GetPawn());
+	if (PlayerCharacter)
 	{
-		return nullptr;
+		return PlayerCharacter->SpawnBuilding(BuildingBlueprint, StartTransform, WithPreview);
 	}
 
-	APCBuilding* NewBuilding = World->SpawnActorDeferred<APCBuilding>(BuildingBlueprint, StartTransform, this);
-	if (NewBuilding)
-	{
-		NewBuilding->Team = Team;
-		NewBuilding->Faction = Faction;
-		NewBuilding->PlayerOwner = this;
-		NewBuilding->HasPreview = WithPreview;
-		NewBuilding->FinishSpawning(GetPawn()->GetTransform());
-	}
-
-	return NewBuilding;
+	return nullptr;
 }
 
 void APCPlayerController::UnblockInput()
